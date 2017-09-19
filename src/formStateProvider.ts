@@ -41,9 +41,11 @@ export type FormProps<P> = {
     formValidate: (name: string) => void,
 };
 
+export type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
+export type ProviderComponent<P> = React.ComponentClass<ProviderProps<P>>;
+
 // API: This HOC enhances your form component.
-export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps<P>>>):
-        React.ComponentClass<ProviderProps<P>> {
+export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<P> {
 
     type ProviderState = {
         isSubmitting: boolean,
