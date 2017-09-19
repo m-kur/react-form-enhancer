@@ -1,2 +1,2 @@
-export { formStateProvider } from './formStateProvider';
-export { focusAdaptor, changeAdaptor } from './eventAdaptors';
+export * from './formStateProvider';
+export * from './eventAdaptors';
