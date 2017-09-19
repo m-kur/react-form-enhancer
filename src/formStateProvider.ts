@@ -14,10 +14,17 @@ export interface FormValidator<P> {
     (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
 }
 
+export type HandlerEvent = {
+    name: string,
+    type: 'handled' | 'resolved' | 'rejected';
+    async: boolean,
+};
+
 export type ProviderProps<P> = {
     defaultValues: P,
     submitHandler: SubmitHandler<P>,
     validators?: { [N in keyof P]?: FormValidator<P> },
+    inspector?: (e: HandlerEvent) => void;
 };
 
 // API: FormStateProvider supplies below all properties.
@@ -148,25 +155,35 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
         }
 
         private invoke(
+            name: string,
             handler: () => Promise<HandlerResult<P>> | HandlerResult<P>,
             onResolve: () => void,
             onReject: (reason: HandlerResult<P>) => void,
         ) {
+            const onHandled = (this.props.inspector != null) ? this.props.inspector : () => {};
             const result = handler();
             if (Promise.resolve<HandlerResult<P>>(result) === result) {
+                onHandled({ name, type: 'handled', async: true });
                 (result as Promise<HandlerResult<P>>).then(
-                    () => onResolve(),
+                    () => {
+                        onResolve();
+                        onHandled({ name, type: 'resolved', async: true });
+                    },
                     (reason) => {
                         // This component doesn't catch Error.
                         if (reason instanceof Error) throw reason;
                         onReject(reason);
+                        onHandled({ name, type: 'rejected', async: true });
                     },
                 );
             } else {
+                onHandled({ name, type: 'handled', async: false });
                 if (result != null) {
                     onReject(result as HandlerResult<P>);
+                    onHandled({ name, type: 'rejected', async: false });
                 } else {
                     onResolve();
+                    onHandled({ name, type: 'resolved', async: false });
                 }
             }
         }
@@ -177,6 +194,7 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
             }
             this.setState({ isSubmitting: true });
             this.invoke(
+                'form',
                 () => this.props.submitHandler(this.state.values, event),
                 () => this.endSubmitting(),
                 (reason) => {
@@ -192,6 +210,7 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
                 if (validator != null) {
                     const validating = Map(this.state.values).set(name, newValue).toJS();
                     this.invoke(
+                        name,
                         () => validator(validating),
                         () => this.cancelError(name),
                         reason => this.setErrors(reason, name),
