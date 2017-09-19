@@ -1,0 +1,51 @@
+{
+    "name": "react-form-enhancer",
+    "version": "0.1.0",
+    "description": "This library enhances React form applications with React's basic state & property.",
+    "main": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "author": "masataka-kurihara",
+    "license": "MIT",
+    "repository": "https://github.com/masataka-kurihara/react-form-enhancer.git",
+    "scripts": {
+        "lint": "tslint --project ./ --type-check './src/**/*.{ts,tsx}'",
+        "test": "jest",
+        "build": "rimraf ./lib/* && tsc && cpx ./src/types/index.d.ts ./lib"
+    },
+    "jest": {
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js"
+        ],
+        "setupFiles": [
+            "./enzyme.setup.js"
+        ],
+        "transform": {
+            "^.+\\.(ts|tsx)$": "./node_modules/ts-jest/preprocessor.js"
+        },
+        "testMatch": [
+            "**/__tests__/*((Test|Spec)\\.(ts|tsx))"
+        ]
+    },
+    "devDependencies": {
+        "@types/enzyme": "^2.8.7",
+        "@types/jest": "^20.0.8",
+        "@types/react": "^16.0.5",
+        "cpx": "^1.5.0",
+        "enzyme": "^2.9.1",
+        "jest": "^21.1.0",
+        "react-dom": "^15.6.1",
+        "react-test-renderer": "^15.6.1",
+        "rimraf": "^2.6.2",
+        "ts-jest": "^21.0.1",
+        "tslint": "^5.7.0",
+        "tslint-config-airbnb": "^5.3.0",
+        "tslint-react": "^3.2.0",
+        "typescript": "^2.5.2"
+    },
+    "dependencies": {
+        "immutable": "^3.8.1",
+        "react": "^15.6.1"
+    }
+}

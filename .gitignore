@@ -1,0 +1,4 @@
+.idea
+lib/__tests__
+node_modules
+yarn-error.log
