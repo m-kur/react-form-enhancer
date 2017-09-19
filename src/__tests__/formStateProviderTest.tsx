@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
 
-import { formStateProvider, FormProps } from '../formStateProvider';
+import { formStateProvider, FormProps, HandlerEvent } from '../formStateProvider';
 import {  focusAdaptor, changeAdaptor } from '../eventAdaptors';
 
 describe('FormStateProvider', () => {
@@ -90,8 +90,8 @@ describe('FormStateProvider', () => {
 
     test('validator for you.onChange', () => {
         const validators = {
-            you: (values: FormState) => {
-                if (!values.you) {
+            you: (values: Partial<FormState>) => {
+                if (values.you == null || values.you === '') {
                     return 'Please tell me your name.';
                 }
                 return null;
@@ -125,5 +125,64 @@ describe('FormStateProvider', () => {
         expect(submitHandler.mock.calls[0][0].greeting).toBe('bye');
         expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
         expect(form.find('#7').text()).toBe('Sorry, can\'t submit.');
+    });
+
+    test('async submitHandler rejects', (done) => {
+        const submitHandler = jest.fn().mockReturnValue(
+            new Promise((resolve, reject) => setTimeout(
+                () => reject('Sorry, can\'t submit.'),
+                100,
+            )),
+        );
+        const inspector = (e: HandlerEvent) => {
+            if (e.name === 'form') {
+                if (e.type === 'rejected') {
+                    expect(e.async).toBeTruthy();
+                    expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
+                    done();
+                } else if (e.type === 'resolved') {
+                    done();
+                }
+            }
+        };
+        const form = mount(
+            <FormStateProvider
+                submitHandler={submitHandler}
+                defaultValues={{ gently: false, you: 'YOU', greeting: 'have' }}
+                inspector={inspector}
+            />);
+        expect.assertions(2);
+        form.find('form').simulate('submit');
+    });
+
+    test('async validator rejects', (done) => {
+        const validators = {
+            you: jest.fn().mockReturnValue(
+                new Promise((resolve, reject) => setTimeout(
+                    () => reject('Please tell me your name.'),
+                    100,
+                )),
+            ),
+        };
+        const inspector = (e: HandlerEvent) => {
+            if (e.name === 'you') {
+                if (e.type === 'rejected') {
+                    expect(e.async).toBeTruthy();
+                    expect(form.state().errors.you).toBe('Please tell me your name.');
+                    done();
+                } else if (e.type === 'resolved') {
+                    done();
+                }
+            }
+        };
+        const form = mount(
+            <FormStateProvider
+                submitHandler={() => null}
+                defaultValues={{ gently: false, you: 'YOU', greeting: 'have' }}
+                validators={validators}
+                inspector={inspector}
+            />);
+        expect.assertions(2);
+        form.find('#1').simulate('change', { target: { name: 'you', value: '' } });
     });
 });

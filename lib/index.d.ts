@@ -15,10 +15,17 @@ declare module 'react-form-enhancer' {
         (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
     }
 
+    export type HandlerEvent = {
+        name: string,
+        type: 'handled' | 'resolved' | 'rejected';
+        async: boolean,
+    };
+
     export type ProviderProps<P> = {
         defaultValues: P,
         submitHandler: SubmitHandler<P>,
         validators?: { [N in keyof P]?: FormValidator<P> },
+        inspector?: (e: HandlerEvent) => void;
     };
 
     // API: FormStateProvider supplies below all properties.
@@ -39,26 +46,26 @@ declare module 'react-form-enhancer' {
     export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps<P>>>):
         React.ComponentClass<ProviderProps<P>>;
 
-    export interface FormFocus {
+    export interface FireEventHandler {
         (name: string): void;
     }
 
-    export interface FormFocusAdaptor<E> {
-        (prop: FormFocus): (e: React.FocusEvent<E>) => void;
+    export interface FireEventAdaptor<E> {
+        (prop: FireEventHandler): (e: React.FocusEvent<E>) => void;
     }
 
-    export interface FormChange {
+    export interface ChangeEventHandler {
         (name: string, value: any, validateConcurrently?: boolean): void;
     }
 
-    export interface FormChangeAdaptor<E> {
-        (prop: FormChange, validateConcurrently?: boolean): (e: React.ChangeEvent<E>) => void;
+    export interface ChangeEventAdaptor<E> {
+        (prop: ChangeEventHandler, validateConcurrently?: boolean): (e: React.ChangeEvent<E>) => void;
     }
 
     export type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
-    export const focusAdaptor: FormFocusAdaptor<WellknownElement>;
+    export const focusAdaptor: FireEventAdaptor<WellknownElement>;
 
-    export const changeAdaptor: FormChangeAdaptor<WellknownElement>;
+    export const changeAdaptor: ChangeEventAdaptor<WellknownElement>;
 
 }
