@@ -20,17 +20,42 @@ If we develop in the same way in some way, some disturbance will arise.
 - I think this library make tests for forms easy. Please see ./src/\_\_tests\_\_/*Test.tsx
 - Yes, TypeScript, and this library supports Promise. You can write in both way, sync or async.
 
-## sample
+## install
+
+Sorry, npm-nize is not yet.
+
+```
+$ yarn add https://github.com/masataka-kurihara/react-form-enhancer.git
+```
+
+## step 1: use properties which provided by "FormProps".  
+
+Create React form component with properties of "FormProps". 
+"FormProps" is supporting type to access to form's state-machine provided automatically, see below.
 
 ```JSX
-// yourName.tsx
-import * as React from 'react';
-import { connect } from 'react-redux';
-import { FormProps, formStateProvider, changeAdaptor, focusAdaptor } from 'react-form-enhancer';
+// API
+type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
+type FormProps<P> = {
+    formValues: P,
+    formErrors: FormErrors<P>,
+    formIsSubmitting: boolean,
+    formIsPristine: boolean,
+    formHasError: boolean,
+    formChange: (name: string, value: any, validate?: boolean) => void,
+    formValidate: (name: string) => void,
+    formSubmit: (event?: React.FormEvent<any>) => void,
+    formReset: () => void,
+};
+```
 
+The type parameter "P" is your form structure then component can get form's values via "formValues: P". Here we go!
+
+```JSX
 type FormState = { yourName: string };
 
-class TargetForm extends React.Component<FormProps<FormState>> {
+// Simple and NOT magical.
+class YourNameForm extends React.Component<FormProps<FormState>> {
     render() {
         return (
             <form onSubmit={this.props.formSubmit}>
@@ -57,12 +82,18 @@ class TargetForm extends React.Component<FormProps<FormState>> {
         );
     }
 }
+```
 
+"changeAdaptor" and "focusAdaptor" are only utility. They convert Events of DOM to arguments of formChange.
+
+## step 2-a: create "FormStateProvider" and render it.
+
+```JSX
 // create a form state provider by HOC
-export const FormStateProvider = formStateProvider<FormState>(TargetForm);
+const FormStateProvider = formStateProvider<FormState>(YourNameForm);
 
 // validation handler, set it to FormStateProvider's "validators" property 
-export const validators = {
+const validators = {
     yourName: (values: FormState) => {
         // Return a Promise object if you want to do async validation.
         // This sample returns string or null. It's a sync validation.
@@ -72,46 +103,62 @@ export const validators = {
         return null;
     },
 };
-```
 
-```JSX
-// usage #1: stand alone
-import axios from 'axios';
-import { FormStateProvider, validators } from './yourName';
-
+// submit handler, axios send values to your API server.
 const handler: SubmitHandler<FormState> = values => {
     if (!values.yourName || values.yourName === 'YOUR NAME?') {
         return 'Can\'t submit.';
     }
     return axios.post('/api', values, { timeout: 3000 }).then(
-        () => null,
-        (reason: any) => ({ form: String(reason) }),
+        () => null, // null means success.
+        (reason: any) => ({ form: reason }),
     );    
 }
 
-export default function () => (
+ReactDom.render(
     <FormStateProvider
         submitHandler={handler}
         defaultValues={{ yourName: 'YOUR NAME?' }}
         validators={validators}
-    />);
+    />,
+    document.getElementById('application'),
 );
 ```
 
-```JSX
-// usage #2: connect by 'react-redux'
-import { Dispatch } from 'redux';
-import { connect } from 'react-redux';
-import { FormStateProvider, validators } from './yourName';
+submit handlers and validators are implement below interfaces.
 
-export default connect(
+```JSX
+type HandlerResult<P> = FormErrors<P> | string | null;
+
+// the submitting interface for a form. React from 'react'.
+interface SubmitHandler<P> {
+    (values: P, event?: React.FormEvent<any>): Promise<HandlerResult<P>> | HandlerResult<P>;
+}
+
+// the validation interface for inputs.
+interface FormValidator<P> {
+    (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
+}
+```
+
+## step 2-b: redux application.
+
+```JSX
+// Redux from 'redux', ReactRedux from 'react-redux'.
+const Connect = ReactRedux.connect(
     state => ({
-        ...state,
         defaultValues: { yourName: state.yourName || 'YOUR NAME?' },
         validators: validators,
     }),
-    (dispatch: Dispatch<any>) => {
-        return { handleSubmit: values => dispatch({ type: 'SUBMIT', payload: values })) };
-    },
-)(FormStateProvider);
+    (dispatch: Redux.Dispatch<any>) => ({
+        handleSubmit: values => dispatch({ type: 'SUBMIT', payload: values }),
+    }),
+)(formStateProvider<FormState>(YourNameForm));
+
+ReactDom.render(
+    <ReactRedux.Provider store={yourStore}>
+        <Connect />
+    </ReactRedux.Provider>
+    document.getElementById('application'),
+);
 ```
