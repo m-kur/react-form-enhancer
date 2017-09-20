@@ -1,4 +1,7 @@
-import { HandlerEvent } from './types';
+import { Map } from 'immutable';
+
+import { HandlerEvent, KeyValue } from './types';
+import { isDefinedName } from './definitionChecker';
 
 export function invokeHandler<Reason, Event>(
     name: string,
@@ -33,4 +36,50 @@ export function invokeHandler<Reason, Event>(
             onProcessed({ name, type: 'resolved', async: false });
         }
     }
+}
+
+function sanitizeErrors(definition: any, errors: any, isForm: boolean): KeyValue {
+    return Object.keys(errors).reduce<Map<string, string | null>>(
+        (prior, name) => {
+            if (!isDefinedName(definition, name, 'result of a validation', isForm)) {
+                return prior.delete(name);
+            }
+            const reason = (errors as KeyValue)[name];
+            if (reason == null) {
+                // null or undefined means no-error.
+                return prior.set(name, null);
+            } else if (typeof reason === 'string' || typeof reason === 'number' || typeof reason === 'boolean') {
+                return prior.set(name, String(reason));
+            }
+            // ignore 'function' etc
+            return prior;
+        },
+        Map({}),
+    ).toJS();
+}
+
+export function mergeErrors(definition: any, oldError: KeyValue, name: string, newErrors: any): KeyValue {
+    const isForm = name === 'form';
+    if (newErrors == null) {
+        if (isForm) {
+            // submit -> resolve
+            return {};
+        } else {
+            // invokeValidator -> resolve
+            return Map(oldError).delete(name).toJS();
+        }
+    } else if (typeof newErrors === 'string' || typeof newErrors === 'number' || typeof newErrors === 'boolean') {
+        // reject returns string (or number, boolean)
+        if (isDefinedName(definition, name, 'result of a validation', isForm)) {
+            return Map(oldError).set(name, String(newErrors)).toJS();
+        }
+    } else if (newErrors instanceof Error) {
+        // reject catch Error
+        if (isDefinedName(definition, name, 'catching Error of a validation', isForm)) {
+            return Map(oldError).set(name, (newErrors as Error).message).toJS();
+        }
+    }
+    // reject returns NOT string, maybe { [name: string]: any }
+    const sanitized = sanitizeErrors(definition, newErrors, isForm);
+    return Map(oldError).merge(sanitized).toJS();
 }
