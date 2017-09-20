@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
 
-import { formStateProvider, FormProps, HandlerEvent } from '../formStateProvider';
+import { HandlerEvent } from '../types';
+import { formStateProvider, FormProps } from '../formStateProvider';
 import {  focusAdaptor, changeAdaptor } from '../eventAdaptors';
 
 describe('FormStateProvider', () => {
