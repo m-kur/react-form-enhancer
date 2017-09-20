@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Map } from 'immutable';
 
-import { FormErrors, HandlerResult, ProviderProps, FormValidator } from './types';
-import { invokeHandler } from './handlerEngine';
+import { FormErrors, HandlerResult, ProviderProps, FormValidator, KeyValue } from './types';
+import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName, checkProviderProps } from './definitionChecker';
 
 // API: FormStateProvider supplies below all properties.
@@ -28,17 +28,17 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         errors: FormErrors<P>,
         isSubmitting: boolean,
     };
-    type KeyValue = { [name: string]: any };
 
     return class FormStateProvider extends React.Component<ProviderProps<P>, ProviderState> {
         constructor(props: ProviderProps<P>) {
             super(props);
-            this.state = { values: props.defaultValues, errors: {}, isSubmitting: false };
+            checkProviderProps(props);
+            const values = props.defaultValues != null ? props.defaultValues : {} as P;
+            this.state = { values, errors: {}, isSubmitting: false };
             this.change = this.change.bind(this);
             this.validate = this.validate.bind(this);
             this.submit = this.submit.bind(this);
             this.reset = this.reset.bind(this);
-            checkProviderProps(props);
         }
 
         private canSetStateFromAsync: boolean = false;
@@ -62,46 +62,17 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private hasError(): boolean {
             for (const name of Object.keys(this.state.errors)) {
-                if ((this.state.errors as { [name: string]: string | null })[name] != null) {
+                if ((this.state.errors as KeyValue)[name] != null) {
                     return true;
                 }
             }
             return false;
         }
 
-        private updateErrors(errors: HandlerResult<P>, primaryName: string) {
+        private updateErrors(name: string, newErrors: HandlerResult<P>) {
             if (this.canSetStateFromAsync) {
-                if (errors == null) {
-                    if (primaryName === 'form') {
-                        // submit -> resolve
-                        this.setState({ errors: {} });
-                    } else {
-                        // invokeValidator -> resolve
-                        this.setState(Map({}).set('errors', Map(this.state.errors).delete(primaryName)).toJS());
-                    }
-                } else if (typeof errors === 'string') {
-                    // reject returns string
-                    if (isDefinedName(this.props.defaultValues, primaryName, 'result of a validation', true)) {
-                        this.setState(Map({}).set('errors', Map(this.state.errors).set(primaryName, errors)).toJS());
-                    }
-                } else {
-                    // reject returns NOT string, maybe { [name: string]: string | null }
-                    const sanitized = Object.keys(errors).reduce<Map<string, string | null>>(
-                        (prior, name) => {
-                            if (!isDefinedName(this.props.defaultValues, name, 'result of a validation')) {
-                                return prior.delete(name);
-                            }
-                            const reason = (errors as KeyValue)[name];
-                            if (reason != null) {
-                                return prior.set(name, String(reason));
-                            }
-                            // don't delete an error whom value is null because of merging with this.state.errors.
-                            return prior;
-                        },
-                        Map({}),
-                    );
-                    this.setState(Map({}).set('errors', Map(this.state.errors).merge(sanitized)).toJS());
-                }
+                const errors = mergeErrors(this.props.defaultValues, this.state.errors, name, newErrors);
+                this.setState({ errors: (errors as FormErrors<P>) });
             }
         }
 
@@ -110,12 +81,12 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             if (this.props.validators != null) {
                 const validator = (this.props.validators as Validators)[name];
                 if (validator != null) {
-                    const validating = Map(this.state.values).set(name, newValue).toJS();
+                    const newValues = Map(this.state.values).set(name, newValue).toJS();
                     invokeHandler(
                         name,
-                        () => validator(validating),
-                        () => this.updateErrors(null, name),
-                        reason => this.updateErrors(reason, name),
+                        () => validator(newValues),
+                        () => this.updateErrors(name, null),
+                        reason => this.updateErrors(name, reason),
                         this.props.inspector,
                     );
                 }
@@ -152,11 +123,11 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                 'form',
                 () => this.props.submitHandler(this.state.values, event),
                 () => {
-                    this.updateErrors(null, 'form');
+                    this.updateErrors('form', null);
                     this.endSubmitting();
                 },
                 (reason) => {
-                    this.updateErrors(reason, 'form');
+                    this.updateErrors('form', reason);
                     this.endSubmitting();
                 },
                 this.props.inspector,
@@ -164,7 +135,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         }
 
         reset() {
-            this.setState({ isSubmitting: false, values: this.props.defaultValues, errors: {} });
+            this.setState({ values: this.props.defaultValues, errors: {}, isSubmitting: false });
         }
 
         render () {
