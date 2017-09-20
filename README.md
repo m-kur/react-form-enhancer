@@ -22,10 +22,8 @@ If we develop in the same way in some way, some disturbance will arise.
 
 ## install
 
-Sorry, npm-nize is not yet.
-
 ```
-$ yarn add https://github.com/masataka-kurihara/react-form-enhancer.git
+$ yarn add react-form-enhancer
 ```
 
 ## step 1: use properties which provided by "FormProps".  
