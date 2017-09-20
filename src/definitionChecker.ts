@@ -4,6 +4,8 @@ import * as PropTypes from 'prop-types';
 import { ProviderProps } from './types';
 
 declare const process: any;
+
+// PropTypes.checkPropTypes is not declared in @types/prop-types.
 declare module 'prop-types' {
     function checkPropTypes<T>(
         typeSpecs: PropTypes.ValidationMap<T>,

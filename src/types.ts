@@ -1,5 +1,7 @@
 import * as React from 'react';
+
 export type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
+
 export type HandlerResult<P> = FormErrors<P> | string | null;
 
 export type HandlerEvent = {
