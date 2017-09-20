@@ -22,6 +22,3 @@ export declare type ProviderProps<P> = {
     };
     inspector?: (e: HandlerEvent) => void;
 };
-export declare type KeyValue = {
-    [name: string]: any;
-};

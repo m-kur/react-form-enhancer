@@ -1,6 +1,7 @@
 import { Map } from 'immutable';
 
-import { HandlerEvent, KeyValue } from './types';
+import { HandlerEvent } from './types';
+import { KeyValue } from './utils';
 import { isDefinedName } from './definitionChecker';
 
 export function invokeHandler<Reason, Event>(

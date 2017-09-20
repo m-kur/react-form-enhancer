@@ -2,15 +2,12 @@ import * as React from 'react';
 import { mount } from 'enzyme';
 
 import { HandlerEvent } from '../types';
-import { formStateProvider } from '../formStateProvider';
-import { YourNameForm, FormState } from './YourNameForm';
+import { YourNameComponent, YourNameState } from './YourName';
 
 describe('FormStateProvider', () => {
-    const FormStateProvider = formStateProvider<FormState>(YourNameForm);
-
     test('init, change, reset', () => {
         const form = mount(
-            <FormStateProvider
+            <YourNameComponent
                 submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
             />);
@@ -40,7 +37,7 @@ describe('FormStateProvider', () => {
 
     test('validator for yourName.onChange', () => {
         const validators = {
-            yourName: (values: Partial<FormState>) => {
+            yourName: (values: Partial<YourNameState>) => {
                 if (values.yourName == null || values.yourName === '') {
                     return 'Please tell me your name.';
                 }
@@ -48,7 +45,7 @@ describe('FormStateProvider', () => {
             },
         };
         const form = mount(
-            <FormStateProvider
+            <YourNameComponent
                 submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
                 validators={validators}
@@ -63,7 +60,7 @@ describe('FormStateProvider', () => {
     test('submit, but error(simple string)', () => {
         const submitHandler = jest.fn().mockReturnValue('Sorry, can\'t submit.');
         const form = mount(
-            <FormStateProvider
+            <YourNameComponent
                 submitHandler={submitHandler}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
             />);
@@ -96,7 +93,7 @@ describe('FormStateProvider', () => {
             }
         };
         const form = mount(
-            <FormStateProvider
+            <YourNameComponent
                 submitHandler={submitHandler}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
                 inspector={inspector}
@@ -126,7 +123,7 @@ describe('FormStateProvider', () => {
             }
         };
         const form = mount(
-            <FormStateProvider
+            <YourNameComponent
                 submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
                 validators={validators}

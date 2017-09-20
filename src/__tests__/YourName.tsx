@@ -1,15 +1,16 @@
 import * as React from 'react';
 
-import { FormProps } from '../formStateProvider';
-import {  focusAdaptor, changeAdaptor } from '../eventAdaptors';
+import { SubmitHandler, FormValidator } from '../types'; // for TS4023.
+import { FormProps, formStateProvider } from '../formStateProvider';
+import { focusAdaptor, changeAdaptor } from '../eventAdaptors';
 
-export type FormState = {
+export type YourNameState = {
     gently: boolean,
     yourName: string,
     greeting: string,
 };
 
-export class YourNameForm extends React.Component<FormProps<FormState>> {
+export class YourNameForm extends React.Component<FormProps<YourNameState>> {
     render() {
         const onChange = changeAdaptor(this.props.formChange);
         return (
@@ -58,3 +59,5 @@ export class YourNameForm extends React.Component<FormProps<FormState>> {
         );
     }
 }
+
+export const YourNameComponent = formStateProvider<YourNameState>(YourNameForm);
