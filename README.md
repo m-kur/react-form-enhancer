@@ -22,7 +22,7 @@ If we develop in the same way in some way, some disturbance will arise.
 
 ## install
 
-Sorry, npm in not yet.
+Sorry, npm-nize is not yet.
 
 ```
 $ yarn add https://github.com/masataka-kurihara/react-form-enhancer.git
@@ -31,7 +31,7 @@ $ yarn add https://github.com/masataka-kurihara/react-form-enhancer.git
 ## step 1: use properties which provided by "FormProps".  
 
 Create React form component with properties of "FormProps". 
-"FormProps" is support type for accessing to form's state-machine provided automatically, see below.
+"FormProps" is supporting type to access to form's state-machine provided automatically, see below.
 
 ```JSX
 // API
@@ -54,6 +54,7 @@ The type parameter "P" is your form structure then component can get form's valu
 ```JSX
 type FormState = { yourName: string };
 
+// Simple and NOT magical.
 class YourNameForm extends React.Component<FormProps<FormState>> {
     render() {
         return (
@@ -110,7 +111,7 @@ const handler: SubmitHandler<FormState> = values => {
     }
     return axios.post('/api', values, { timeout: 3000 }).then(
         () => null, // null means success.
-        (reason: any) => ({ form: String(reason) }),
+        (reason: any) => ({ form: reason }),
     );    
 }
 
@@ -122,6 +123,22 @@ ReactDom.render(
     />,
     document.getElementById('application'),
 );
+```
+
+submit handlers and validators are implement below interfaces.
+
+```JSX
+type HandlerResult<P> = FormErrors<P> | string | null;
+
+// the submitting interface for a form. React from 'react'.
+interface SubmitHandler<P> {
+    (values: P, event?: React.FormEvent<any>): Promise<HandlerResult<P>> | HandlerResult<P>;
+}
+
+// the validation interface for inputs.
+interface FormValidator<P> {
+    (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
+}
 ```
 
 ## step 2-b: redux application.

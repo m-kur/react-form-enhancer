@@ -15,7 +15,7 @@ export interface SubmitHandler<P> {
     (values: P, event?: React.FormEvent<any>): Promise<HandlerResult<P>> | HandlerResult<P>;
 }
 
-// API: the validation interface for a form and inputs.
+// API: the validation interface for inputs.
 export interface FormValidator<P> {
     (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
 }
