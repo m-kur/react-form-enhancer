@@ -26,5 +26,3 @@ export type ProviderProps<P> = {
     validators?: { [N in keyof P]?: FormValidator<P> },
     inspector?: (e: HandlerEvent) => void;
 };
-
-export type KeyValue = { [name: string]: any };

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Map } from 'immutable';
 
-import { FormErrors, HandlerResult, ProviderProps, FormValidator, KeyValue } from './types';
+import { FormErrors, HandlerResult, ProviderProps, FormValidator } from './types';
+import { KeyValue } from './utils';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName, checkProviderProps } from './definitionChecker';
 
@@ -136,7 +137,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private reset() {
             if (this.canSetStateFromAsync) {
-                this.setState({values: this.props.defaultValues, errors: {}, isSubmitting: false});
+                this.setState({ values: this.props.defaultValues, errors: {}, isSubmitting: false });
             }
         }
 
