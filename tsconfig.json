@@ -2,6 +2,7 @@
     "compilerOptions": {
         "outDir": "lib",
         "sourceMap": true,
+        "declaration": true,
         "strict": true,
         "module": "commonjs",
         "target": "es5",
@@ -9,8 +10,6 @@
         "lib": ["es6", "dom"],
         "types": ["jest"]
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": ["node_modules"]
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "lib"]
 }

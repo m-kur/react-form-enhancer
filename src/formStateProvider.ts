@@ -1,68 +1,44 @@
 import * as React from 'react';
 import { Map } from 'immutable';
 
-export type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
-export type HandlerResult<P> = FormErrors<P> | string | null;
-
-// API: the submitting interface for a form.
-export interface SubmitHandler<P> {
-    (values: P, event?: React.FormEvent<any>): Promise<HandlerResult<P>> | HandlerResult<P>;
-}
-
-// API: the validation interface for a form and inputs.
-export interface FormValidator<P> {
-    (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
-}
-
-export type ProviderProps<P> = {
-    defaultValues: P,
-    submitHandler: SubmitHandler<P>,
-    validators?: { [N in keyof P]?: FormValidator<P> },
-};
+import { FormErrors, HandlerResult, ProviderProps, FormValidator } from './types';
+import { invokeHandler } from './handlerEngine';
+import { isDefinedName, checkProviderProps } from './definitionChecker';
 
 // API: FormStateProvider supplies below all properties.
 export type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
-    formHasError: boolean,
-    formIsPristine: boolean,
     formIsSubmitting: boolean,
-    formCancelError: (name: string) => void,
-    formReset: () => void,
-    formSubmit: (event?: React.FormEvent<any>) => void,
+    formIsPristine: boolean,
+    formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
     formValidate: (name: string) => void,
+    formSubmit: (event?: React.FormEvent<any>) => void,
+    formReset: () => void,
 };
 
-// API: This HOC enhances your form component.
-export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps<P>>>):
-        React.ComponentClass<ProviderProps<P>> {
+export type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
+export type ProviderComponent<P> = React.ComponentClass<ProviderProps<P>>;
 
+// API: This HOC enhances your form component.
+export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<P> {
     type ProviderState = {
-        isSubmitting: boolean,
         values: P,
         errors: FormErrors<P>,
+        isSubmitting: boolean,
     };
-
-    type Values = { [name: string]: any };
-    type Errors = { [name: string]: string | null };
-    type Validators = { [name: string]: FormValidator<P> };
+    type KeyValue = { [name: string]: any };
 
     return class FormStateProvider extends React.Component<ProviderProps<P>, ProviderState> {
         constructor(props: ProviderProps<P>) {
             super(props);
-            if (props.defaultValues == null) {
-                throw new Error('"defaultValues" property isn\'t set.');
-            }
-            if (props.submitHandler == null) {
-                throw new Error('"submitHandler" property isn\'t set.');
-            }
-            this.state = { isSubmitting: false, values: props.defaultValues, errors: {} };
-            this.cancelError = this.cancelError.bind(this);
-            this.reset = this.reset.bind(this);
-            this.submit = this.submit.bind(this);
+            this.state = { values: props.defaultValues, errors: {}, isSubmitting: false };
             this.change = this.change.bind(this);
             this.validate = this.validate.bind(this);
+            this.submit = this.submit.bind(this);
+            this.reset = this.reset.bind(this);
+            checkProviderProps(props);
         }
 
         private canSetStateFromAsync: boolean = false;
@@ -75,48 +51,13 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
             this.canSetStateFromAsync = false;
         }
 
-        private isDefinedName(name: string): boolean {
-            return name === 'form' || this.props.defaultValues.hasOwnProperty(name);
-        }
-
-        private setErrors(errors: HandlerResult<P>, primaryName: string) {
-            if (this.canSetStateFromAsync && this.isDefinedName(primaryName)) {
-                if (errors == null) {
-                    if (primaryName === 'form') {
-                        // submit -> resolve
-                        this.setState({ errors: {} });
-                    } else {
-                        // invokeValidator -> resolve
-                        this.cancelError(primaryName);
-                    }
-                } else if (typeof errors === 'string') {
-                    // reject returns string
-                    this.setState(Map({}).set('errors', Map(this.state.errors).set(primaryName, errors)).toJS());
-                } else {
-                    // reject returns NOT string, maybe { [name: string]: string | null }
-                    const sanitized = Object.keys(errors).reduce<Map<string, any>>(
-                        (result, name) => {
-                            if (!this.isDefinedName(name)) {
-                                return result.delete(name);
-                            }
-                            const reason: string | null = (errors as Errors)[name];
-                            if (reason != null) {
-                                return result.set(name, String(reason));
-                            }
-                            // don't delete an error whom value is null because of merging with this.state.errors.
-                            return result;
-                        },
-                        Map<string, any>(errors),
-                    );
-                    this.setState(Map({}).set('errors', Map(this.state.errors).merge(sanitized)).toJS());
+        private isPristine(): boolean {
+            for (const name of Object.keys(this.state.values)) {
+                if ((this.state.values as KeyValue)[name] !== (this.props.defaultValues as KeyValue)[name]) {
+                    return false;
                 }
             }
-        }
-
-        cancelError(name: string) {
-            if (this.canSetStateFromAsync && this.isDefinedName(name)) {
-                this.setState(Map({}).set('errors', Map(this.state.errors).delete(name)).toJS());
-            }
+            return true;
         }
 
         private hasError(): boolean {
@@ -128,80 +69,61 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
             return false;
         }
 
-        private isPristine(): boolean {
-            for (const name of Object.keys(this.state.values)) {
-                if ((this.state.values as Values)[name] !== (this.props.defaultValues as Values)[name]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        reset() {
-            this.setState({ isSubmitting: false, values: this.props.defaultValues, errors: {} });
-        }
-
-        private endSubmitting() {
+        private updateErrors(errors: HandlerResult<P>, primaryName: string) {
             if (this.canSetStateFromAsync) {
-                this.setState({ isSubmitting: false });
-            }
-        }
-
-        private invoke(
-            handler: () => Promise<HandlerResult<P>> | HandlerResult<P>,
-            onResolve: () => void,
-            onReject: (reason: HandlerResult<P>) => void,
-        ) {
-            const result = handler();
-            if (Promise.resolve<HandlerResult<P>>(result) === result) {
-                (result as Promise<HandlerResult<P>>).then(
-                    () => onResolve(),
-                    (reason) => {
-                        // This component doesn't catch Error.
-                        if (reason instanceof Error) throw reason;
-                        onReject(reason);
-                    },
-                );
-            } else {
-                if (result != null) {
-                    onReject(result as HandlerResult<P>);
+                if (errors == null) {
+                    if (primaryName === 'form') {
+                        // submit -> resolve
+                        this.setState({ errors: {} });
+                    } else {
+                        // invokeValidator -> resolve
+                        this.setState(Map({}).set('errors', Map(this.state.errors).delete(primaryName)).toJS());
+                    }
+                } else if (typeof errors === 'string') {
+                    // reject returns string
+                    if (isDefinedName(this.props.defaultValues, primaryName, 'result of a validation', true)) {
+                        this.setState(Map({}).set('errors', Map(this.state.errors).set(primaryName, errors)).toJS());
+                    }
                 } else {
-                    onResolve();
+                    // reject returns NOT string, maybe { [name: string]: string | null }
+                    const sanitized = Object.keys(errors).reduce<Map<string, string | null>>(
+                        (prior, name) => {
+                            if (!isDefinedName(this.props.defaultValues, name, 'result of a validation')) {
+                                return prior.delete(name);
+                            }
+                            const reason = (errors as KeyValue)[name];
+                            if (reason != null) {
+                                return prior.set(name, String(reason));
+                            }
+                            // don't delete an error whom value is null because of merging with this.state.errors.
+                            return prior;
+                        },
+                        Map({}),
+                    );
+                    this.setState(Map({}).set('errors', Map(this.state.errors).merge(sanitized)).toJS());
                 }
             }
-        }
-
-        submit(event?: React.FormEvent<any>) {
-            if (event != null && event.preventDefault != null) {
-                event.preventDefault();
-            }
-            this.setState({ isSubmitting: true });
-            this.invoke(
-                () => this.props.submitHandler(this.state.values, event),
-                () => this.endSubmitting(),
-                (reason) => {
-                    this.setErrors(reason, 'form');
-                    this.endSubmitting();
-                },
-            );
         }
 
         private invokeValidator(name: string, newValue: any) {
+            type Validators = { [name: string]: FormValidator<P> };
             if (this.props.validators != null) {
                 const validator = (this.props.validators as Validators)[name];
                 if (validator != null) {
                     const validating = Map(this.state.values).set(name, newValue).toJS();
-                    this.invoke(
+                    invokeHandler(
+                        name,
                         () => validator(validating),
-                        () => this.cancelError(name),
-                        reason => this.setErrors(reason, name),
+                        () => this.updateErrors(null, name),
+                        reason => this.updateErrors(reason, name),
+                        this.props.inspector,
                     );
                 }
             }
         }
 
         change(name: string, value: any, validateConcurrently: boolean = true) {
-            if (this.isDefinedName(name)) {
+            if (isDefinedName(this.props.defaultValues, name, 'props.formChange')) {
                 this.setState(Map({}).set('values', Map(this.state.values).set(name, value)).toJS());
                 if (validateConcurrently) {
                     this.invokeValidator(name, value);
@@ -210,25 +132,55 @@ export function formStateProvider<P>(Form: React.ComponentType<Partial<FormProps
         }
 
         validate(name: string) {
-            if (this.isDefinedName(name)) {
-                this.invokeValidator(name, (this.state.values as Values)[name]);
+            if (isDefinedName(this.props.defaultValues, name, 'props.formValidate')) {
+                this.invokeValidator(name, (this.state.values as KeyValue)[name]);
             }
+        }
+
+        private endSubmitting() {
+            if (this.canSetStateFromAsync) {
+                this.setState({ isSubmitting: false });
+            }
+        }
+
+        submit(event?: React.FormEvent<any>) {
+            if (event != null && event.preventDefault != null) {
+                event.preventDefault();
+            }
+            this.setState({ isSubmitting: true });
+            invokeHandler(
+                'form',
+                () => this.props.submitHandler(this.state.values, event),
+                () => {
+                    this.updateErrors(null, 'form');
+                    this.endSubmitting();
+                },
+                (reason) => {
+                    this.updateErrors(reason, 'form');
+                    this.endSubmitting();
+                },
+                this.props.inspector,
+            );
+        }
+
+        reset() {
+            this.setState({ isSubmitting: false, values: this.props.defaultValues, errors: {} });
         }
 
         render () {
             const Component = Form as React.ComponentClass<FormProps<P>>;
             const props = Map<string, any>(this.props)
-                .delete('defaultValues').delete('submitHandler').delete('validators')
+                .delete('defaultValues').delete('submitHandler').delete('validators').delete('inspector')
                 .set('formValues', this.state.values)
                 .set('formErrors', this.state.errors)
-                .set('formHasError', this.hasError())
-                .set('formIsPristine', this.isPristine())
                 .set('formIsSubmitting', this.state.isSubmitting)
-                .set('formCancelError', this.cancelError)
-                .set('formReset', this.reset)
-                .set('formSubmit', this.submit)
+                .set('formIsPristine', this.isPristine())
+                .set('formHasError', this.hasError())
                 .set('formChange', this.change)
-                .set('formValidate', this.validate).toJS();
+                .set('formValidate', this.validate)
+                .set('formSubmit', this.submit)
+                .set('formReset', this.reset)
+                .toJS();
             return React.createElement<FormProps<P>>(Component, props);
         }
     };
