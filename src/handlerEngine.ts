@@ -80,6 +80,5 @@ export function mergeErrors(definition: any, oldError: KeyValue, name: string, n
         }
     }
     // reject returns NOT string, maybe { [name: string]: any }
-    const sanitized = sanitizeErrors(definition, newErrors, isForm);
-    return Map(oldError).merge(sanitized).toJS();
+    return Map(oldError).merge(sanitizeErrors(definition, newErrors, isForm)).toJS();
 }

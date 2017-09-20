@@ -5,7 +5,7 @@ import { FormErrors, HandlerResult, ProviderProps, FormValidator, KeyValue } fro
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName, checkProviderProps } from './definitionChecker';
 
-// API: FormStateProvider supplies below all properties.
+// API: FormStateProvider supplies all below properties.
 export type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
@@ -93,7 +93,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             }
         }
 
-        change(name: string, value: any, validateConcurrently: boolean = true) {
+        private change(name: string, value: any, validateConcurrently: boolean = true) {
             if (isDefinedName(this.props.defaultValues, name, 'props.formChange')) {
                 this.setState(Map({}).set('values', Map(this.state.values).set(name, value)).toJS());
                 if (validateConcurrently) {
@@ -102,7 +102,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             }
         }
 
-        validate(name: string) {
+        private validate(name: string) {
             if (isDefinedName(this.props.defaultValues, name, 'props.formValidate')) {
                 this.invokeValidator(name, (this.state.values as KeyValue)[name]);
             }
@@ -114,7 +114,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             }
         }
 
-        submit(event?: React.FormEvent<any>) {
+        private submit(event?: React.FormEvent<any>) {
             if (event != null && event.preventDefault != null) {
                 event.preventDefault();
             }
@@ -134,8 +134,10 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             );
         }
 
-        reset() {
-            this.setState({ values: this.props.defaultValues, errors: {}, isSubmitting: false });
+        private reset() {
+            if (this.canSetStateFromAsync) {
+                this.setState({values: this.props.defaultValues, errors: {}, isSubmitting: false});
+            }
         }
 
         render () {
@@ -150,8 +152,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                 .set('formChange', this.change)
                 .set('formValidate', this.validate)
                 .set('formSubmit', this.submit)
-                .set('formReset', this.reset)
-                .toJS();
+                .set('formReset', this.reset).toJS();
             return React.createElement<FormProps<P>>(Component, props);
         }
     };
