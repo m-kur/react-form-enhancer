@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-export interface FireEventHandler {
+export interface FocusEventHandler {
     (name: string): void;
 }
 
-export interface FireEventAdaptor<E> {
-    (prop: FireEventHandler): (e: React.FocusEvent<E>) => void;
+export interface FocusEventAdaptor<E> {
+    (prop: FocusEventHandler): (e: React.FocusEvent<E>) => void;
 }
 
 export interface ChangeEventHandler {
@@ -18,12 +18,12 @@ export interface ChangeEventAdaptor<E> {
 
 export type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
-export const focusAdaptor: FireEventAdaptor<WellknownElement> =
+export const focusAdaptor: FocusEventAdaptor<WellknownElement> =
         prop => e => prop(e.currentTarget.name);
 
 export const changeAdaptor: ChangeEventAdaptor<WellknownElement> =
     (prop, validateConcurrently = true) => (e) => {
-        const value = e.target.type !== 'checkbox' ? e.target.value :
-            (e as React.ChangeEvent<HTMLInputElement>).target.checked;
+        type EI = React.ChangeEvent<HTMLInputElement>;
+        const value = e.target.type !== 'checkbox' ? e.target.value : (e as EI).target.checked;
         prop(e.target.name, value, validateConcurrently);
     };
