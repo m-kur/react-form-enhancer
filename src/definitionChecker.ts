@@ -1,7 +1,7 @@
 import { Map } from 'immutable';
 import * as PropTypes from 'prop-types';
 
-import { ProviderProps } from './types';
+import { ProviderProps, FormValidatorMap } from './types';
 
 declare const process: any;
 
@@ -15,7 +15,7 @@ declare module 'prop-types' {
     ): void;
 }
 
-export function isDefinedName(definition: any, name: string, warnFor: string, isForm: boolean = false): boolean {
+export function isDefinedName<P>(definition: P, name: string, warnFor: string, isForm: boolean = false): boolean {
     const defined = isForm && name === 'form' || definition.hasOwnProperty(name);
     if (!defined && warnFor != null && warnFor !== '') { // "!= null" is for non-TypeScript code.
         if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
@@ -25,10 +25,9 @@ export function isDefinedName(definition: any, name: string, warnFor: string, is
     return defined;
 }
 
-
-export function checkProviderProps(props: ProviderProps<any>) {
+export function checkProviderProps<P>(props: ProviderProps<P>) {
     if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
-        PropTypes.checkPropTypes<ProviderProps<{}>>(
+        PropTypes.checkPropTypes<ProviderProps<P>>(
             {
                 defaultValues: PropTypes.object.isRequired,
                 submitHandler: PropTypes.func.isRequired,
@@ -38,9 +37,9 @@ export function checkProviderProps(props: ProviderProps<any>) {
             props, 'props', 'FormStateProvider',
         );
         if (props.validators != null) {
-            const checker: PropTypes.ValidationMap<any> = Object.keys(props.validators).reduce(
+            const checker = Object.keys(props.validators).reduce<object>(
                 (prior, name) => {
-                    if (isDefinedName(props.defaultValues, name, '')) {
+                    if (isDefinedName<P>(props.defaultValues, name, '')) {
                         return Map(prior).set(name, PropTypes.func).toJS();
                     }
                     console.error('Warning: The \`validators\` property of \`FormStateProvider\` ' +
@@ -49,7 +48,8 @@ export function checkProviderProps(props: ProviderProps<any>) {
                 },
                 {},
             );
-            PropTypes.checkPropTypes(checker, props.validators, 'props.validators', 'FormStateProvider');
+            PropTypes.checkPropTypes<FormValidatorMap<P>>(
+                checker, props.validators, 'props.validators', 'FormStateProvider');
         }
     }
 }

@@ -10,19 +10,30 @@ export type HandlerEvent = {
     async: boolean,
 };
 
-// API: the submitting interface for a form.
+/**
+ * the submitting interface for a form.
+ * @param values form,s current values.
+ * @param event DOM/submit event.
+ * @return an error message, supposes Promise or FormErrors<P> or string or null(=success).
+ */
 export interface SubmitHandler<P> {
-    (values: P, event?: React.FormEvent<any>): Promise<HandlerResult<P>> | HandlerResult<P>;
+    (values: P, event?: React.FormEvent<any>): Promise<never> | HandlerResult<P>;
 }
 
-// API: the validation interface for inputs.
+/**
+ * the validation interface for inputs.
+ * @param values form,s current values.
+ * @return an error message, supposes Promise or FormErrors<P> or string or null(=success).
+ */
 export interface FormValidator<P> {
-    (values: Partial<P>): Promise<HandlerResult<P>> | HandlerResult<P>;
+    (values: Partial<P>): Promise<never> | HandlerResult<P>;
 }
+
+export type FormValidatorMap<P> = { [N in keyof P]?: FormValidator<P> };
 
 export type ProviderProps<P> = {
     defaultValues: P,
     submitHandler: SubmitHandler<P>,
-    validators?: { [N in keyof P]?: FormValidator<P> },
+    validators?: FormValidatorMap<P>,
     inspector?: (e: HandlerEvent) => void;
 };

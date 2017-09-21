@@ -18,9 +18,18 @@ export interface ChangeEventAdaptor<E> {
 
 export type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
+/**
+ * An adaptor for DOM onFocus event converts element's name attribute.
+ * @param {FocusEventHandler} prop this.props.formValidate, etc.
+ */
 export const focusAdaptor: FocusEventAdaptor<WellknownElement> =
         prop => e => prop(e.currentTarget.name);
 
+/**
+ * An adaptor for DOM onChange event converts element's name and value attribute.
+ * @param {ChangeEventHandler} prop this.props.formChange, etc.
+ * @param {boolean} validateConcurrently do concurrent validation.
+ */
 export const changeAdaptor: ChangeEventAdaptor<WellknownElement> =
     (prop, validateConcurrently = true) => (e) => {
         type EI = React.ChangeEvent<HTMLInputElement>;

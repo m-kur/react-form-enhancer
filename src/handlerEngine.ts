@@ -1,22 +1,22 @@
 import { Map } from 'immutable';
 
-import { HandlerEvent } from './types';
-import { KeyValue } from './utils';
+import { HandlerEvent, HandlerResult, FormErrors } from './types';
 import { isDefinedName } from './definitionChecker';
 
-export function invokeHandler<Reason, Event>(
+export function invokeHandler<P>(
     name: string,
-    handler: () => Promise<Reason> | Reason,
+    handler: () => Promise<never> | HandlerResult<P>,
     onResolve: () => void,
-    onReject: (reason: Reason) => void,
+    onReject: (reason: any) => void,
     inspector?: (e: HandlerEvent) => void,
 ) {
     const onProcessed = inspector != null ? inspector : () => {};
     const result = handler();
-    if (Promise.resolve<Reason>(result) === result) {
+    if (Promise.resolve<HandlerResult<P>>(result) === result) {
         onProcessed({ name, type: 'handled', async: true });
-        (result as Promise<Reason>).then(
+        (result as Promise<never>).then(
             () => {
+                // ignore returns when Promise is resolved.
                 onResolve();
                 onProcessed({ name, type: 'resolved', async: true });
             },
@@ -30,7 +30,7 @@ export function invokeHandler<Reason, Event>(
     } else {
         onProcessed({ name, type: 'handled', async: false });
         if (result != null) {
-            onReject(result as Reason);
+            onReject(result);
             onProcessed({ name, type: 'rejected', async: false });
         } else {
             onResolve();
@@ -39,13 +39,13 @@ export function invokeHandler<Reason, Event>(
     }
 }
 
-function sanitizeErrors(definition: any, errors: any, isForm: boolean): KeyValue {
-    return Object.keys(errors).reduce<Map<string, string | null>>(
+function sanitizeErrors<P>(definition: P, newErrors: any, isForm: boolean): FormErrors<P> {
+    return Object.keys(newErrors).reduce<Map<string, string | null>>(
         (prior, name) => {
             if (!isDefinedName(definition, name, 'result of a validation', isForm)) {
                 return prior.delete(name);
             }
-            const reason = (errors as KeyValue)[name];
+            const reason = newErrors[name];
             if (reason == null) {
                 // null or undefined means no-error.
                 return prior.set(name, null);
@@ -59,7 +59,7 @@ function sanitizeErrors(definition: any, errors: any, isForm: boolean): KeyValue
     ).toJS();
 }
 
-export function mergeErrors(definition: any, oldError: KeyValue, name: string, newErrors: any): KeyValue {
+export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: string, newErrors: any): FormErrors<P> {
     const isForm = name === 'form';
     if (newErrors == null) {
         if (isForm) {
@@ -67,19 +67,15 @@ export function mergeErrors(definition: any, oldError: KeyValue, name: string, n
             return {};
         } else {
             // invokeValidator -> resolve
-            return Map(oldError).delete(name).toJS();
+            return Map<any>(oldError).delete(name).toJS();
         }
     } else if (typeof newErrors === 'string' || typeof newErrors === 'number' || typeof newErrors === 'boolean') {
         // reject returns string (or number, boolean)
         if (isDefinedName(definition, name, 'result of a validation', isForm)) {
-            return Map(oldError).set(name, String(newErrors)).toJS();
-        }
-    } else if (newErrors instanceof Error) {
-        // reject catch Error
-        if (isDefinedName(definition, name, 'catching Error of a validation', isForm)) {
-            return Map(oldError).set(name, (newErrors as Error).message).toJS();
+            return Map<any>(oldError).set(name, String(newErrors)).toJS();
         }
     }
     // reject returns NOT string, maybe { [name: string]: any }
-    return Map(oldError).merge(sanitizeErrors(definition, newErrors, isForm)).toJS();
+    // newErrors isn't Error object because invokeHandler doesn't catch Error.
+    return Map<any>(oldError).merge(sanitizeErrors<P>(definition, newErrors, isForm)).toJS();
 }
