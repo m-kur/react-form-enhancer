@@ -1,45 +1,46 @@
 import { Map } from 'immutable';
 
-import { HandlerEvent, HandlerResult, FormErrors } from './types';
+import { HandlerResult, FormErrors, Inspector } from './types';
 import { isDefinedName } from './definitionChecker';
 
 export function invokeHandler<P>(
     name: string,
-    handler: () => Promise<never> | HandlerResult<P>,
-    onResolve: () => void,
-    onReject: (reason: any) => void,
-    inspector?: (e: HandlerEvent) => void,
+    handle: () => Promise<never> | HandlerResult<P>, // <- Promise's type arg is intentional never.
+    resolve: () => void,
+    reject: (reason: any) => void,
+    inspect?: Inspector,
 ) {
-    const onProcessed = inspector != null ? inspector : () => {};
-    const result = handler();
-    if (Promise.resolve<HandlerResult<P>>(result) === result) {
-        onProcessed({ name, type: 'handled', async: true });
-        (result as Promise<never>).then(
+    const notify = inspect != null ? inspect : () => {};
+    const result = handle();
+    // don't catch Error.
+    if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
+        notify(name, 'handled', true);
+        (result as Promise<never>).then( // <- type arg is intentional never.
             () => {
                 // ignore returns when Promise is resolved.
-                onResolve();
-                onProcessed({ name, type: 'resolved', async: true });
+                resolve();
+                notify(name, 'resolved', true);
             },
             (reason) => {
                 // don't catch Error.
                 if (reason instanceof Error) throw reason;
-                onReject(reason);
-                onProcessed({ name, type: 'rejected', async: true });
+                reject(reason);
+                notify(name, 'rejected', true);
             },
         );
     } else {
-        onProcessed({ name, type: 'handled', async: false });
-        if (result != null) {
-            onReject(result);
-            onProcessed({ name, type: 'rejected', async: false });
+        notify(name, 'handled', false);
+        if (result == null) {
+            resolve();
+            notify(name, 'resolved', false);
         } else {
-            onResolve();
-            onProcessed({ name, type: 'resolved', async: false });
+            reject(result);
+            notify(name, 'rejected', false);
         }
     }
 }
 
-function sanitizeErrors<P>(definition: P, newErrors: any, isForm: boolean): FormErrors<P> {
+export function sanitizeErrors<P>(definition: P, newErrors: any, isForm: boolean): FormErrors<P> {
     return Object.keys(newErrors).reduce<Map<string, string | null>>(
         (prior, name) => {
             if (!isDefinedName(definition, name, 'result of a validation', isForm)) {

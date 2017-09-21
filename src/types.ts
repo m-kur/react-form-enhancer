@@ -4,36 +4,42 @@ export type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
 
 export type HandlerResult<P> = FormErrors<P> | string | null;
 
-export type HandlerEvent = {
-    name: string,
-    type: 'handled' | 'resolved' | 'rejected';
-    async: boolean,
-};
-
-/**
- * the submitting interface for a form.
- * @param values form,s current values.
- * @param event DOM/submit event.
- * @return an error message, supposes Promise or FormErrors<P> or string or null(=success).
- */
-export interface SubmitHandler<P> {
+export interface FormSubmitter<P> {
+    /**
+     * the submitting interface for a form.
+     * @param {P} values values form,s current values.
+     * @param {React.FormEvent<any>} event event DOM/submit event.
+     * @return {Promise<never> | HandlerResult<P>}
+     *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
+     */
     (values: P, event?: React.FormEvent<any>): Promise<never> | HandlerResult<P>;
 }
 
-/**
- * the validation interface for inputs.
- * @param values form,s current values.
- * @return an error message, supposes Promise or FormErrors<P> or string or null(=success).
- */
-export interface FormValidator<P> {
+export interface InputValidator<P> {
+    /**
+     * the validation interface for inputs.
+     * @param {Partial<P>} values form's current values.
+     * @return {Promise<never> | HandlerResult<P>}
+     *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
+     */
     (values: Partial<P>): Promise<never> | HandlerResult<P>;
 }
 
-export type FormValidatorMap<P> = { [N in keyof P]?: FormValidator<P> };
+export interface Inspector {
+    /**
+     * It is for inspection of the handler engine.
+     * @param {string} name current handling target name.
+     * @param {string} on 'handled' or 'resolved' or 'rejected'.
+     * @param {boolean} async
+     */
+    (name: string, on: string, async: boolean): void; // "on" is intentional string, not union.
+}
+
+export type InputValidatorsMap<P> = { [N in keyof P]?: InputValidator<P> };
 
 export type ProviderProps<P> = {
     defaultValues: P,
-    submitHandler: SubmitHandler<P>,
-    validators?: FormValidatorMap<P>,
-    inspector?: (e: HandlerEvent) => void;
+    submitHandler: FormSubmitter<P>,
+    validators?: InputValidatorsMap<P>,
+    inspector?: Inspector;
 };

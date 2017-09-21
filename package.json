@@ -1,6 +1,6 @@
 {
     "name": "react-form-enhancer",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "This library enhances React form applications with React's basic state & property.",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
@@ -22,7 +22,7 @@
         "typescript"
     ],
     "scripts": {
-        "lint": "tslint --project ./ --type-check './src/**/*.{ts,tsx}'",
+        "lint": "tslint --fix --project ./ --type-check './src/**/*.{ts,tsx}'",
         "test": "jest",
         "build": "rimraf ./lib/* && tsc ",
         "doc": "rimraf ./doc/* && typedoc --out ./doc ./src/index.ts"
