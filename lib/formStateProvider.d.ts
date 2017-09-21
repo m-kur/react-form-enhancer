@@ -1,5 +1,8 @@
 import * as React from 'react';
 import { FormErrors, ProviderProps } from './types';
+/**
+ * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
+ */
 export declare type FormProps<P> = {
     formValues: P;
     formErrors: FormErrors<P>;
@@ -13,4 +16,9 @@ export declare type FormProps<P> = {
 };
 export declare type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
 export declare type ProviderComponent<P> = React.ComponentClass<ProviderProps<P>>;
+/**
+ * This HOC enhances your form component.
+ * @param {FormComponent<P>} Form target component of manage. Wrapped component provides {FormProps<P>} properties.
+ * @return {ProviderComponent<P>} FormStateProvider, a managed component which has {ProviderProps<P>} properties.
+ */
 export declare function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<P>;

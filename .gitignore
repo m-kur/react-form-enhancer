@@ -1,5 +1,6 @@
 .DS_Store
 .idea
+doc
 lib/__tests__
 node_modules
 yarn-error.log

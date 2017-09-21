@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { Map } from 'immutable';
 
-import { FormErrors, HandlerResult, ProviderProps, FormValidator } from './types';
-import { KeyValue } from './utils';
+import { FormErrors, ProviderProps } from './types';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName, checkProviderProps } from './definitionChecker';
 
-// API: FormStateProvider supplies all below properties.
+/**
+ * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
+ */
 export type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
@@ -22,7 +23,11 @@ export type FormProps<P> = {
 export type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
 export type ProviderComponent<P> = React.ComponentClass<ProviderProps<P>>;
 
-// API: This HOC enhances your form component.
+/**
+ * This HOC enhances your form component.
+ * @param {FormComponent<P>} Form target component of manage. Wrapped component provides {FormProps<P>} properties.
+ * @return {ProviderComponent<P>} FormStateProvider, a managed component which has {ProviderProps<P>} properties.
+ */
 export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<P> {
     type ProviderState = {
         values: P,
@@ -54,7 +59,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private isPristine(): boolean {
             for (const name of Object.keys(this.state.values)) {
-                if ((this.state.values as KeyValue)[name] !== (this.props.defaultValues as KeyValue)[name]) {
+                if ((this.state.values as any)[name] !== (this.props.defaultValues as any)[name]) {
                     return false;
                 }
             }
@@ -63,27 +68,26 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private hasError(): boolean {
             for (const name of Object.keys(this.state.errors)) {
-                if ((this.state.errors as KeyValue)[name] != null) {
+                if ((this.state.errors as any)[name] != null) {
                     return true;
                 }
             }
             return false;
         }
 
-        private updateErrors(name: string, newErrors: HandlerResult<P>) {
+        private updateErrors(name: string, newErrors: any) {
             if (this.canSetStateFromAsync) {
-                const errors = mergeErrors(this.props.defaultValues, this.state.errors, name, newErrors);
-                this.setState({ errors: (errors as FormErrors<P>) });
+                const errors = mergeErrors<P>(this.props.defaultValues, this.state.errors, name, newErrors);
+                this.setState({ errors });
             }
         }
 
         private invokeValidator(name: string, newValue: any) {
-            type Validators = { [name: string]: FormValidator<P> };
             if (this.props.validators != null) {
-                const validator = (this.props.validators as Validators)[name];
+                const validator = (this.props.validators as any)[name];
                 if (validator != null) {
                     const newValues = Map(this.state.values).set(name, newValue).toJS();
-                    invokeHandler(
+                    invokeHandler<P>(
                         name,
                         () => validator(newValues),
                         () => this.updateErrors(name, null),
@@ -95,7 +99,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         }
 
         private change(name: string, value: any, validateConcurrently: boolean = true) {
-            if (isDefinedName(this.props.defaultValues, name, 'props.formChange')) {
+            if (isDefinedName<P>(this.props.defaultValues, name, 'props.formChange')) {
                 this.setState(Map({}).set('values', Map(this.state.values).set(name, value)).toJS());
                 if (validateConcurrently) {
                     this.invokeValidator(name, value);
@@ -104,8 +108,8 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         }
 
         private validate(name: string) {
-            if (isDefinedName(this.props.defaultValues, name, 'props.formValidate')) {
-                this.invokeValidator(name, (this.state.values as KeyValue)[name]);
+            if (isDefinedName<P>(this.props.defaultValues, name, 'props.formValidate')) {
+                this.invokeValidator(name, (this.state.values as any)[name]);
             }
         }
 
@@ -120,7 +124,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                 event.preventDefault();
             }
             this.setState({ isSubmitting: true });
-            invokeHandler(
+            invokeHandler<P>(
                 'form',
                 () => this.props.submitHandler(this.state.values, event),
                 () => {
