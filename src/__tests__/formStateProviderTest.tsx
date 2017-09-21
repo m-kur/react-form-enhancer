@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
 
-import { HandlerEvent } from '../types';
+import { Inspector } from '../types';
 import { YourNameComponent, YourNameState } from './YourName';
 
-describe('FormStateProvider', () => {
+describe('sync', () => {
     test('init, change, reset', () => {
         const form = mount(
             <YourNameComponent
@@ -73,21 +73,23 @@ describe('FormStateProvider', () => {
         expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
         expect(form.find('#7').text()).toBe('Sorry, can\'t submit.');
     });
+});
 
-    test('async submitHandler rejects', (done) => {
+describe('async', () => {
+    test('submitHandler rejects', (done) => {
         const submitHandler = jest.fn().mockReturnValue(
             new Promise((resolve, reject) => setTimeout(
                 () => reject('Sorry, can\'t submit.'),
                 100,
             )),
         );
-        const inspector = (e: HandlerEvent) => {
-            if (e.name === 'form') {
-                if (e.type === 'rejected') {
-                    expect(e.async).toBeTruthy();
+        const inspector: Inspector = (name, on, async) => {
+            if (name === 'form') {
+                if (on === 'rejected') {
+                    expect(async).toBeTruthy();
                     expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
                     done();
-                } else if (e.type === 'resolved') {
+                } else if (on === 'resolved') {
                     done();
                 }
             }
@@ -102,7 +104,7 @@ describe('FormStateProvider', () => {
         form.find('form').simulate('submit');
     });
 
-    test('async validator rejects', (done) => {
+    test('validator rejects', (done) => {
         const validators = {
             yourName: jest.fn().mockReturnValue(
                 new Promise((resolve, reject) => setTimeout(
@@ -111,13 +113,13 @@ describe('FormStateProvider', () => {
                 )),
             ),
         };
-        const inspector = (e: HandlerEvent) => {
-            if (e.name === 'yourName') {
-                if (e.type === 'rejected') {
-                    expect(e.async).toBeTruthy();
+        const inspector: Inspector = (name, on, async) => {
+            if (name === 'yourName') {
+                if (on === 'rejected') {
+                    expect(async).toBeTruthy();
                     expect(form.state().errors.yourName).toBe('Please tell me your name.');
                     done();
-                } else if (e.type === 'resolved') {
+                } else if (on === 'resolved') {
                     done();
                 }
             }

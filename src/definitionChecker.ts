@@ -1,7 +1,7 @@
 import { Map } from 'immutable';
 import * as PropTypes from 'prop-types';
 
-import { ProviderProps, FormValidatorMap } from './types';
+import { ProviderProps, InputValidatorsMap } from './types';
 
 declare const process: any;
 
@@ -48,7 +48,7 @@ export function checkProviderProps<P>(props: ProviderProps<P>) {
                 },
                 {},
             );
-            PropTypes.checkPropTypes<FormValidatorMap<P>>(
+            PropTypes.checkPropTypes<InputValidatorsMap<P>>(
                 checker, props.validators, 'props.validators', 'FormStateProvider');
         }
     }
