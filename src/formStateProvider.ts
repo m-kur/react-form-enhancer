@@ -17,11 +17,11 @@ export type FormProps<P> = {
     formIsPristine: boolean,
     formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
+    formOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
     formValidate: (name: string) => void,
+    formOnValidate: (e: React.FocusEvent<WellknownElement>) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
-    formChangeOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
-    formValidateOnFocus: (e: React.FocusEvent<WellknownElement>) => void,
 };
 
 export type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
@@ -180,11 +180,11 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                     formIsPristine: this.isPristine(),
                     formHasError: this.hasError(),
                     formChange: this.change,
+                    formOnChange: changeAdaptor(this.change),
                     formValidate: this.validate,
+                    formOnValidate: focusAdaptor(this.validate),
                     formSubmit: this.submit,
                     formReset: this.reset,
-                    formChangeOnChange: changeAdaptor(this.change),
-                    formValidateOnFocus: focusAdaptor(this.validate),
                 }).toJS();
             return React.createElement<FormProps<P>>(Component, props);
         }

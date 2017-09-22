@@ -34,7 +34,7 @@ Create React form component with properties of "FormProps".
 ```JSX
 // API
 type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
-type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
@@ -42,11 +42,11 @@ type FormProps<P> = {
     formIsPristine: boolean,
     formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
+    formOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
     formValidate: (name: string) => void,
+    formOnValidate: (e: React.FocusEvent<WellknownElement>) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
-    formChangeOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
-    formValidateOnFocus: (e: React.FocusEvent<WellknownElement>) => void,
 };
 ```
 
@@ -64,8 +64,8 @@ class YourNameForm extends React.Component<FormProps<FormState>> {
                     name="yourName"
                     type="text"
                     value={this.props.formValues.yourName}
-                    onChange={this.props.formChangeOnChange}
-                    onBlur={this.props.formValidateOnFocus}
+                    onChange={this.props.formOnChange}
+                    onBlur={this.props.formOnValidate}
                 />
                 <div>{this.props.formErrors.yourName}</div>
                 <input
@@ -84,8 +84,6 @@ class YourNameForm extends React.Component<FormProps<FormState>> {
     }
 }
 ```
-
-"changeAdaptor" and "focusAdaptor" are only utility. They convert Events of DOM to arguments of formChange.
 
 ## step 2-a: create "FormStateProvider" and render it.
 

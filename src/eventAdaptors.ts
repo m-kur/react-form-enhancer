@@ -23,7 +23,10 @@ export type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAr
  * @param {FocusEventHandler} prop this.props.formValidate, etc.
  */
 export const focusAdaptor: FocusEventAdaptor<WellknownElement> =
-        prop => e => prop(e.currentTarget.name);
+        prop => (e) => {
+            const name = e.currentTarget.name != null ? e.currentTarget.name : (e.target as any).name;
+            prop(name);
+        };
 
 /**
  * An adaptor for DOM onChange event converts element's name and value attribute.
@@ -34,5 +37,6 @@ export const changeAdaptor: ChangeEventAdaptor<WellknownElement> =
     (prop, validateConcurrently = true) => (e) => {
         type EI = React.ChangeEvent<HTMLInputElement>;
         const value = e.target.type !== 'checkbox' ? e.target.value : (e as EI).target.checked;
-        prop(e.target.name, value, validateConcurrently);
+        const name = e.target.name != null ? e.target.name : e.currentTarget.name;
+        prop(name, value, validateConcurrently);
     };

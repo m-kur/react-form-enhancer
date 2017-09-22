@@ -18,22 +18,22 @@ export class YourNameForm extends React.Component<FormProps<YourNameState>> {
                     name="gently"
                     type="checkbox"
                     checked={this.props.formValues.gently}
-                    onChange={this.props.formChangeOnChange}
+                    onChange={this.props.formOnChange}
                 />
                 <input
                     id="1"
                     name="yourName"
                     type="text"
                     value={this.props.formValues.yourName}
-                    onChange={this.props.formChangeOnChange}
-                    onBlur={this.props.formValidateOnFocus}
+                    onChange={this.props.formOnChange}
+                    onBlur={this.props.formOnValidate}
                 />
                 <div id="2">{this.props.formErrors.yourName}</div>
                 <select
                     id="3"
                     name="greeting"
                     value={this.props.formValues.greeting}
-                    onChange={this.props.formChangeOnChange}
+                    onChange={this.props.formOnChange}
                 >
                     <option value="hello">hello!</option>
                     <option value="bye">bye.</option>
