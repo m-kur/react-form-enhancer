@@ -8,10 +8,12 @@ export interface FormSubmitter<P> {
     /**
      * the submitting interface for a form.
      * @param {P} values values form,s current values.
+     * @param {boolean} hasError This form has errors.
+     * @param {boolean} isPristine This form is pristine, as same as default values.
      * @return {Promise<never> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P): Promise<never> | HandlerResult<P>;
+    (values: P, hasError: boolean, isPristine: boolean): Promise<never> | HandlerResult<P>;
 }
 
 export interface InputValidator<P> {
