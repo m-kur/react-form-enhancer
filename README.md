@@ -34,6 +34,7 @@ Create React form component with properties of "FormProps".
 ```JSX
 // API
 type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
+type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
@@ -44,6 +45,8 @@ type FormProps<P> = {
     formValidate: (name: string) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
+    formChangeOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
+    formValidateOnFocus: (e: React.FocusEvent<WellknownElement>) => void,
 };
 ```
 
@@ -61,8 +64,8 @@ class YourNameForm extends React.Component<FormProps<FormState>> {
                     name="yourName"
                     type="text"
                     value={this.props.formValues.yourName}
-                    onChange={changeAdaptor(this.props.formChange)}
-                    onBlur={focusAdaptor(this.props.formValidate)}
+                    onChange={this.props.formChangeOnChange}
+                    onBlur={this.props.formValidateOnFocus}
                 />
                 <div>{this.props.formErrors.yourName}</div>
                 <input

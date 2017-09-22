@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { FormSubmitter, InputValidator, Inspector } from '../types'; // for TS4023.
 import { FormProps, formStateProvider } from '../formStateProvider';
-import { focusAdaptor, changeAdaptor } from '../eventAdaptors';
 
 export type YourNameState = {
     gently: boolean,
@@ -12,7 +11,6 @@ export type YourNameState = {
 
 export class YourNameForm extends React.Component<FormProps<YourNameState>> {
     render() {
-        const onChange = changeAdaptor(this.props.formChange);
         return (
             <form onSubmit={this.props.formSubmit}>
                 <input
@@ -20,22 +18,22 @@ export class YourNameForm extends React.Component<FormProps<YourNameState>> {
                     name="gently"
                     type="checkbox"
                     checked={this.props.formValues.gently}
-                    onChange={onChange}
+                    onChange={this.props.formChangeOnChange}
                 />
                 <input
                     id="1"
                     name="yourName"
                     type="text"
                     value={this.props.formValues.yourName}
-                    onChange={onChange}
-                    onBlur={focusAdaptor(this.props.formValidate)}
+                    onChange={this.props.formChangeOnChange}
+                    onBlur={this.props.formValidateOnFocus}
                 />
                 <div id="2">{this.props.formErrors.yourName}</div>
                 <select
                     id="3"
                     name="greeting"
                     value={this.props.formValues.greeting}
-                    onChange={onChange}
+                    onChange={this.props.formChangeOnChange}
                 >
                     <option value="hello">hello!</option>
                     <option value="bye">bye.</option>
