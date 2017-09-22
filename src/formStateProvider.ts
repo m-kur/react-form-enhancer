@@ -1,9 +1,10 @@
 import * as React from 'react';
+import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
-import { FormErrors, ProviderProps } from './types';
+import { FormErrors, ProviderProps, InputValidator } from './types';
 import { invokeHandler, mergeErrors } from './handlerEngine';
-import { isDefinedName, checkProviderProps } from './definitionChecker';
+import { isDefinedName } from './definitionChecker';
 
 /**
  * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
@@ -36,9 +37,16 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
     };
 
     return class FormStateProvider extends React.Component<ProviderProps<P>, ProviderState> {
+        // runtime properties check for ECMA applications.
+        static propTypes = {
+            defaultValues: PropTypes.object.isRequired,
+            submitter: PropTypes.func.isRequired,
+            validators: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.func), PropTypes.func]),
+            inspector: PropTypes.func,
+        };
+
         constructor(props: ProviderProps<P>) {
             super(props);
-            checkProviderProps(props);
             const values = props.defaultValues != null ? props.defaultValues : {} as P;
             this.state = { values, errors: {}, isSubmitting: false };
             this.change = this.change.bind(this);
@@ -84,17 +92,19 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private invokeValidator(name: string, newValue: any) {
             if (this.props.validators != null) {
-                const validator = (this.props.validators as any)[name];
-                if (validator != null) {
-                    const newValues = Map(this.state.values).set(name, newValue).toJS();
+                const arrayOfValidators = Array.isArray(this.props.validators) ?
+                    this.props.validators as InputValidator<P>[] :
+                    [(this.props.validators as InputValidator<P>)];
+                arrayOfValidators.forEach((validator) => {
+                    const currentValues = Map(this.state.values).toJS();
                     invokeHandler<P>(
                         name,
-                        () => validator(newValues),
+                        () => validator(name, newValue, currentValues),
                         () => this.updateErrors(name, null),
                         reason => this.updateErrors(name, reason),
                         this.props.inspector,
                     );
-                }
+                });
             }
         }
 
@@ -126,7 +136,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             this.setState({ isSubmitting: true });
             invokeHandler<P>(
                 'form',
-                () => this.props.submitHandler(this.state.values, event),
+                () => this.props.submitter(Map(this.state.values).toJS()),
                 () => {
                     this.updateErrors('form', null);
                     this.endSubmitting();
@@ -148,7 +158,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         render () {
             const Component = Form as React.ComponentClass<FormProps<P>>;
             const props = Map<string, any>(this.props)
-                .delete('defaultValues').delete('submitHandler').delete('validators').delete('inspector')
+                .delete('defaultValues').delete('submitter').delete('validators').delete('inspector')
                 .set('formValues', this.state.values)
                 .set('formErrors', this.state.errors)
                 .set('formIsSubmitting', this.state.isSubmitting)
