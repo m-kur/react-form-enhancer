@@ -1,4 +1,3 @@
-import * as React from 'react';
 export declare type FormErrors<P> = {
     [N in keyof P | 'form']?: string | null;
 };
@@ -7,20 +6,21 @@ export interface FormSubmitter<P> {
     /**
      * the submitting interface for a form.
      * @param {P} values values form,s current values.
-     * @param {React.FormEvent<any>} event event DOM/submit event.
      * @return {Promise<never> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P, event?: React.FormEvent<any>): Promise<never> | HandlerResult<P>;
+    (values: P): Promise<never> | HandlerResult<P>;
 }
 export interface InputValidator<P> {
     /**
      * the validation interface for inputs.
-     * @param {Partial<P>} values form's current values.
+     * @param {string} name target name.
+     * @param {any} newValue the new, incoming value of "name".
+     * @param {P} currentValues form's current values, the value of "name" is old.
      * @return {Promise<never> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: Partial<P>): Promise<never> | HandlerResult<P>;
+    (name: string, newValue: any, currentValues: P): Promise<never> | HandlerResult<P>;
 }
 export interface Inspector {
     /**
@@ -31,12 +31,9 @@ export interface Inspector {
      */
     (name: string, on: string, async: boolean): void;
 }
-export declare type InputValidatorsMap<P> = {
-    [N in keyof P]?: InputValidator<P>;
-};
 export declare type ProviderProps<P> = {
     defaultValues: P;
-    submitHandler: FormSubmitter<P>;
-    validators?: InputValidatorsMap<P>;
+    submitter: FormSubmitter<P>;
+    validators?: InputValidator<P>[] | InputValidator<P>;
     inspector?: Inspector;
 };

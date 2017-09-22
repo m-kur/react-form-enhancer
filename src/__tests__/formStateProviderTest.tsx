@@ -2,14 +2,14 @@ import * as React from 'react';
 import { mount } from 'enzyme';
 
 import { Inspector } from '../types';
-import { YourNameComponent, YourNameState } from './YourName';
+import { YourNameComponent } from './YourName';
 
 describe('sync', () => {
     test('init, change, reset', () => {
         const form = mount(
             <YourNameComponent
-                submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
+                submitter={() => null}
             />);
         // init
         expect(form.state().values.gently).toBeFalsy();
@@ -36,19 +36,20 @@ describe('sync', () => {
     });
 
     test('validator for yourName.onChange', () => {
-        const validators = {
-            yourName: (values: Partial<YourNameState>) => {
-                if (values.yourName == null || values.yourName === '') {
+        const validator = (name: string, newValue: any) => {
+            if (name === 'yourName') {
+                if (newValue == null || newValue === '') {
                     return 'Please tell me your name.';
                 }
-                return null;
-            },
+            }
+            return null;
         };
+
         const form = mount(
             <YourNameComponent
-                submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
-                validators={validators}
+                submitter={() => null}
+                validators={validator}
             />);
         expect(form.state().errors).toEqual({});
         form.find('#1').simulate('change', { target: { name: 'yourName', value: '' } });
@@ -58,26 +59,26 @@ describe('sync', () => {
     });
 
     test('submit, but error(simple string)', () => {
-        const submitHandler = jest.fn().mockReturnValue('Sorry, can\'t submit.');
+        const submitter = jest.fn().mockReturnValue('Sorry, can\'t submit.');
         const form = mount(
             <YourNameComponent
-                submitHandler={submitHandler}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
+                submitter={submitter}
             />);
         form.find('#1').simulate('change', { target: { name: 'yourName', value: 'Taki' } });
         form.find('#3').simulate('change', { target: { name: 'greeting', value: 'bye' } });
         form.find('form').simulate('submit');
-        expect(submitHandler.mock.calls[0][0].gently).toBeFalsy();
-        expect(submitHandler.mock.calls[0][0].yourName).toBe('Taki');
-        expect(submitHandler.mock.calls[0][0].greeting).toBe('bye');
+        expect(submitter.mock.calls[0][0].gently).toBeFalsy();
+        expect(submitter.mock.calls[0][0].yourName).toBe('Taki');
+        expect(submitter.mock.calls[0][0].greeting).toBe('bye');
         expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
         expect(form.find('#7').text()).toBe('Sorry, can\'t submit.');
     });
 });
 
 describe('async', () => {
-    test('submitHandler rejects', (done) => {
-        const submitHandler = jest.fn().mockReturnValue(
+    test('submitter rejects', (done) => {
+        const submitter = jest.fn().mockReturnValue(
             new Promise((resolve, reject) => setTimeout(
                 () => reject('Sorry, can\'t submit.'),
                 100,
@@ -96,8 +97,8 @@ describe('async', () => {
         };
         const form = mount(
             <YourNameComponent
-                submitHandler={submitHandler}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
+                submitter={submitter}
                 inspector={inspector}
             />);
         expect.assertions(2);
@@ -105,14 +106,9 @@ describe('async', () => {
     });
 
     test('validator rejects', (done) => {
-        const validators = {
-            yourName: jest.fn().mockReturnValue(
-                new Promise((resolve, reject) => setTimeout(
-                    () => reject('Please tell me your name.'),
-                    100,
-                )),
-            ),
-        };
+        const validator = jest.fn().mockReturnValue(
+            new Promise((resolve, reject) => setTimeout(() => reject('Please tell me your name.'), 100)),
+        );
         const inspector: Inspector = (name, on, async) => {
             if (name === 'yourName') {
                 if (on === 'rejected') {
@@ -126,9 +122,9 @@ describe('async', () => {
         };
         const form = mount(
             <YourNameComponent
-                submitHandler={() => null}
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
-                validators={validators}
+                submitter={() => null}
+                validators={validator}
                 inspector={inspector}
             />);
         expect.assertions(2);
