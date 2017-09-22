@@ -84,7 +84,7 @@ describe('async', () => {
                 100,
             )),
         );
-        const inspector: Inspector = (name, on, async) => {
+        const inspector: Inspector = (on, name, async) => {
             if (name === 'form') {
                 if (on === 'rejected') {
                     expect(async).toBeTruthy();
@@ -109,7 +109,7 @@ describe('async', () => {
         const validator = jest.fn().mockReturnValue(
             new Promise((resolve, reject) => setTimeout(() => reject('Please tell me your name.'), 100)),
         );
-        const inspector: Inspector = (name, on, async) => {
+        const inspector: Inspector = (on, name, async) => {
             if (name === 'yourName') {
                 if (on === 'rejected') {
                     expect(async).toBeTruthy();

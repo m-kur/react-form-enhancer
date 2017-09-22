@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
-import { FormErrors, ProviderProps, InputValidator } from './types';
+import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName } from './definitionChecker';
 
@@ -37,7 +37,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
     };
 
     return class FormStateProvider extends React.Component<ProviderProps<P>, ProviderState> {
-        // runtime properties check for ECMA applications.
+        // runtime properties check for Redux or/and ECMA applications.
         static propTypes = {
             defaultValues: PropTypes.object.isRequired,
             submitter: PropTypes.func.isRequired,
@@ -53,15 +53,19 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             this.validate = this.validate.bind(this);
             this.submit = this.submit.bind(this);
             this.reset = this.reset.bind(this);
+            this.notify = props.inspector != null ? props.inspector : () => {};
         }
 
         private canSetStateFromAsync: boolean = false;
+        private notify: Inspector;
 
         componentWillMount() {
             this.canSetStateFromAsync = true;
+            this.notify('mount', 'form');
         }
 
         componentWillUnmount() {
+            this.notify('unmount', 'form');
             this.canSetStateFromAsync = false;
         }
 
@@ -99,10 +103,10 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                     const currentValues = Map(this.state.values).toJS();
                     invokeHandler<P>(
                         name,
-                        () => validator(name, newValue, currentValues),
+                        () => validator(name, newValue, currentValues, this.notify),
                         () => this.updateErrors(name, null),
                         reason => this.updateErrors(name, reason),
-                        this.props.inspector,
+                        this.notify,
                     );
                 });
             }
@@ -111,6 +115,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         private change(name: string, value: any, validateConcurrently: boolean = true) {
             if (isDefinedName<P>(this.props.defaultValues, name, 'props.formChange')) {
                 this.setState(Map({}).set('values', Map(this.state.values).set(name, value)).toJS());
+                this.notify('props.formChange', name, value);
                 if (validateConcurrently) {
                     this.invokeValidator(name, value);
                 }
@@ -120,6 +125,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         private validate(name: string) {
             if (isDefinedName<P>(this.props.defaultValues, name, 'props.formValidate')) {
                 this.invokeValidator(name, (this.state.values as any)[name]);
+                this.notify('props.formValidate', name);
             }
         }
 
@@ -134,9 +140,13 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                 event.preventDefault();
             }
             this.setState({ isSubmitting: true });
+            this.notify('form', 'props.formSubmit');
             invokeHandler<P>(
                 'form',
-                () => this.props.submitter(Map(this.state.values).toJS(), this.hasError(), this.isPristine()),
+                () => {
+                    const values = Map(this.state.values).toJS();
+                    return this.props.submitter(values, this.hasError(), this.isPristine(), this.notify);
+                },
                 () => {
                     this.updateErrors('form', null);
                     this.endSubmitting();
@@ -145,13 +155,14 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                     this.updateErrors('form', reason);
                     this.endSubmitting();
                 },
-                this.props.inspector,
+                this.notify,
             );
         }
 
         private reset() {
             if (this.canSetStateFromAsync) {
                 this.setState({ values: this.props.defaultValues, errors: {}, isSubmitting: false });
+                this.notify('props.formReset', 'form');
             }
         }
 

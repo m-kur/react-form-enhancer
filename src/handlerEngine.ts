@@ -8,34 +8,33 @@ export function invokeHandler<P>(
     handle: () => Promise<never> | HandlerResult<P>, // <- Promise's type arg is intentional never.
     resolve: () => void,
     reject: (reason: any) => void,
-    inspect?: Inspector,
+    inspect: Inspector,
 ) {
-    const notify = inspect != null ? inspect : () => {};
     const result = handle();
     // don't catch Error.
     if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
-        notify(name, 'handled', true);
+        inspect('handled', name, true);
         (result as Promise<never>).then( // <- type arg is intentional never.
             () => {
                 // ignore returns when Promise is resolved.
                 resolve();
-                notify(name, 'resolved', true);
+                inspect('resolved', name, true);
             },
             (reason) => {
                 // don't catch Error.
                 if (reason instanceof Error) throw reason;
                 reject(reason);
-                notify(name, 'rejected', true);
+                inspect('rejected', name, true);
             },
         );
     } else {
-        notify(name, 'handled', false);
+        inspect('handled', name, false);
         if (result == null) {
             resolve();
-            notify(name, 'resolved', false);
+            inspect('resolved', name, false);
         } else {
             reject(result);
-            notify(name, 'rejected', false);
+            inspect('rejected', name, false);
         }
     }
 }

@@ -1,4 +1,12 @@
-import * as React from 'react';
+export interface Inspector {
+    /**
+     * It is for inspection of the handler engine.
+     * @param {string} on 'handled', 'resolved', 'rejected', 'props.*(from {FormProps<P>})'.
+     * @param {string} name current handling target name.
+     * @param {boolean} value for many purposes.
+     */
+    (on: string, name: string, value?: any): void; // "on" is intentional string, not union.
+}
 
 export type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
 
@@ -10,10 +18,11 @@ export interface FormSubmitter<P> {
      * @param {P} values values form,s current values.
      * @param {boolean} hasError This form has errors.
      * @param {boolean} isPristine This form is pristine, as same as default values.
+     * @param {Inspector} inspector see {ProviderProps<P>}. a submitter debugging tool.
      * @return {Promise<never> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P, hasError: boolean, isPristine: boolean): Promise<never> | HandlerResult<P>;
+    (values: P, hasError: boolean, isPristine: boolean, inspector: Inspector): Promise<never> | HandlerResult<P>;
 }
 
 export interface InputValidator<P> {
@@ -22,20 +31,11 @@ export interface InputValidator<P> {
      * @param {string} name target name.
      * @param {any} newValue the new, incoming value of "name".
      * @param {P} currentValues form's current values, the value of "name" is old.
+     * @param {Inspector} inspector see {ProviderProps<P>}. a validator debugging tool.
      * @return {Promise<never> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (name: string, newValue: any, currentValues: P): Promise<never> | HandlerResult<P>;
-}
-
-export interface Inspector {
-    /**
-     * It is for inspection of the handler engine.
-     * @param {string} name current handling target name.
-     * @param {string} on 'handled' or 'resolved' or 'rejected'.
-     * @param {boolean} async
-     */
-    (name: string, on: string, async: boolean): void; // "on" is intentional string, not union.
+    (name: string, newValue: any, currentValues: P, inspector: Inspector): Promise<never> | HandlerResult<P>;
 }
 
 export type ProviderProps<P> = {
