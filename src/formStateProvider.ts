@@ -3,7 +3,7 @@ import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
 import { isDefinedName } from './definitionChecker';
-import { HasNameAndValueElement, changeAdaptor, HasNameElement, focusAdaptor } from './eventAdaptors';
+import { changeAdaptor, focusAdaptor } from './eventAdaptors';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
 
@@ -17,9 +17,7 @@ export type FormProps<P> = {
     formIsPristine: boolean,
     formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
-    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void,
     formValidate: (name: string) => void,
-    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
 };
@@ -180,11 +178,12 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                     formIsPristine: this.isPristine(),
                     formHasError: this.hasError(),
                     formChange: this.change,
-                    formOnChange: changeAdaptor(this.change),
                     formValidate: this.validate,
-                    formOnValidate: focusAdaptor(this.validate),
                     formSubmit: this.submit,
                     formReset: this.reset,
+                    // FormPropsEx
+                    formOnChange: changeAdaptor(this.change),
+                    formOnValidate: focusAdaptor(this.validate),
                 }).toJS();
             return React.createElement<FormProps<P>>(Component, props);
         }

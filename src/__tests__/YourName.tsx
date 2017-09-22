@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { FormSubmitter, InputValidator, Inspector } from '../types'; // for TS4023.
 import { FormProps, formStateProvider } from '../formStateProvider';
+import { FormPropsEx } from '../eventAdaptors';
 
 export type YourNameState = {
     gently: boolean,
@@ -9,7 +10,7 @@ export type YourNameState = {
     greeting: string,
 };
 
-export class YourNameForm extends React.Component<FormProps<YourNameState>> {
+export class YourNameForm extends React.Component<FormProps<YourNameState> & FormPropsEx> {
     render() {
         return (
             <form onSubmit={this.props.formSubmit}>

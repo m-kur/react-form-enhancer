@@ -49,3 +49,8 @@ export const focusAdaptor: FocusEventAdaptor<HasNameElement> =
         const name = e.currentTarget.name != null ? e.currentTarget.name : (e.target as any).name;
         prop(name);
     };
+
+export type FormPropsEx = {
+    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void,
+    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void,
+};

@@ -13,28 +13,28 @@ export function invokeHandler<P>(
     const result = handle();
     // don't catch Error.
     if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
-        inspect('handled', name, true);
+        inspect('handled', name);
         (result as Promise<never>).then( // <- type arg is intentional never.
             () => {
                 // ignore returns when Promise is resolved.
                 resolve();
-                inspect('resolved', name, true);
+                inspect('async-resolved', name);
             },
             (reason) => {
                 // don't catch Error.
                 if (reason instanceof Error) throw reason;
                 reject(reason);
-                inspect('rejected', name, true);
+                inspect('async-rejected', name, reason);
             },
         );
     } else {
-        inspect('handled', name, false);
+        inspect('handled', name);
         if (result == null) {
             resolve();
-            inspect('resolved', name, false);
+            inspect('resolved', name);
         } else {
             reject(result);
-            inspect('rejected', name, false);
+            inspect('rejected', name, result);
         }
     }
 }
