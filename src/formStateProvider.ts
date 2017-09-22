@@ -136,7 +136,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             this.setState({ isSubmitting: true });
             invokeHandler<P>(
                 'form',
-                () => this.props.submitter(Map(this.state.values).toJS()),
+                () => this.props.submitter(Map(this.state.values).toJS(), this.hasError(), this.isPristine()),
                 () => {
                     this.updateErrors('form', null);
                     this.endSubmitting();

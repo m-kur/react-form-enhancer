@@ -92,7 +92,7 @@ const FormStateProvider = formStateProvider<FormState>(YourNameForm);
 
 // submit handler, axios send values to your API server.
 const submitter: FormSubmitter<FormState> = values => {
-    if (!values.yourName || values.yourName === 'YOUR NAME?') {
+    if (values.yourName == null || values.yourName === '' || values.yourName === 'YOUR NAME?') {
         return 'Can\'t submit.';
     }
     return axios.post('/api', values, { timeout: 3000 }).then(
@@ -106,7 +106,7 @@ const validator = (name: string, newValue: any) => {
     if (name === 'yourName') { 
         // Return a Promise object if you want to do async validation.
         // This sample returns string or null. It's a sync validation.
-        if (!newValue || newVvalue === 'YOUR NAME?') {
+        if (newValue == null || newValue === '' || newValue === 'YOUR NAME?') {
             return 'Please tell me your name.';
         }
     }
@@ -130,7 +130,7 @@ type HandlerResult<P> = FormErrors<P> | string | null;
 
 // the submitting interface for a form.
 interface FormSubmitter<P> {
-    (values: P): Promise<never> | HandlerResult<P>;
+    (values: P, hasError: boolean, isPristine: boolean): Promise<never> | HandlerResult<P>;
 }
 
 // the validation interface for inputs.
