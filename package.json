@@ -1,7 +1,7 @@
 {
     "name": "react-form-enhancer",
     "version": "0.1.4",
-    "description": "This library enhances React form applications with React's basic state & property.",
+    "description": "This library enhances React form components with React's basic state & property.",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
     "author": "masataka-kurihara",
@@ -19,12 +19,14 @@
         "form",
         "validation",
         "submit",
-        "typescript"
+        "redux",
+        "typescript",
+        "javascript"
     ],
     "scripts": {
         "lint": "tslint --fix --project ./ --type-check './src/**/*.{ts,tsx}'",
         "test": "jest",
-        "build": "rimraf ./lib/* && tsc ",
+        "build": "rimraf ./lib/* && tsc",
         "doc": "rimraf ./doc/* && typedoc --out ./doc ./src/index.ts"
     },
     "jest": {

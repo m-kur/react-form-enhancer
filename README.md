@@ -1,6 +1,6 @@
 # react-form-enhancer
 
-This library enhances React form applications with React's basic state and property.
+This library enhances React form components with React's basic state and property.
 
 ## motivation
 
