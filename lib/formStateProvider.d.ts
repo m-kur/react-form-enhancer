@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { WellknownElement } from './eventAdaptors';
+import { HasNameAndValueElement, HasNameElement } from './eventAdaptors';
 import { FormErrors, ProviderProps } from './types';
 /**
  * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
@@ -11,11 +11,11 @@ export declare type FormProps<P> = {
     formIsPristine: boolean;
     formHasError: boolean;
     formChange: (name: string, value: any, validate?: boolean) => void;
+    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void;
     formValidate: (name: string) => void;
+    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void;
     formSubmit: (event?: React.FormEvent<any>) => void;
     formReset: () => void;
-    formChangeOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void;
-    formValidateOnFocus: (e: React.FocusEvent<WellknownElement>) => void;
 };
 export declare type FormComponent<P> = React.ComponentType<Partial<FormProps<P>>>;
 export declare type ProviderComponent<P> = React.ComponentClass<ProviderProps<P>>;

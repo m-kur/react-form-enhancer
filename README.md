@@ -34,7 +34,8 @@ Create React form component with properties of "FormProps".
 ```JSX
 // API
 type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
-type WellknownElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+type HasNameAndValueElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement;
+type HasNameElement = HasNameAndValueElement | HTMLFormElement | HTMLMapElement;
 type FormProps<P> = {
     formValues: P,
     formErrors: FormErrors<P>,
@@ -42,9 +43,9 @@ type FormProps<P> = {
     formIsPristine: boolean,
     formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
-    formOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
+    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void,
     formValidate: (name: string) => void,
-    formOnValidate: (e: React.FocusEvent<WellknownElement>) => void,
+    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
 };

@@ -3,7 +3,7 @@ import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
 import { isDefinedName } from './definitionChecker';
-import { changeAdaptor, focusAdaptor, WellknownElement } from './eventAdaptors';
+import { HasNameAndValueElement, changeAdaptor, HasNameElement, focusAdaptor } from './eventAdaptors';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
 
@@ -17,9 +17,9 @@ export type FormProps<P> = {
     formIsPristine: boolean,
     formHasError: boolean,
     formChange: (name: string, value: any, validate?: boolean) => void,
-    formOnChange: (e: React.ChangeEvent<WellknownElement>, validateConcurrently?: boolean) => void,
+    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void,
     formValidate: (name: string) => void,
-    formOnValidate: (e: React.FocusEvent<WellknownElement>) => void,
+    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
 };
