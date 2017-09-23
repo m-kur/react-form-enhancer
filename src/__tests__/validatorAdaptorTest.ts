@@ -1,7 +1,7 @@
-import { simpleMemorized } from '../memorizedAdaptors';
+import { memorizedAdaptor } from '../validatorAdaptors';
 import { InputValidator } from '../types';
 
-describe('simpleMemorized', () => {
+describe('memorizedAdaptor', () => {
     type State = { yourName: string, age: number };
     const values = { yourName: 'Mitsuha', age: 18 };
 
@@ -10,7 +10,7 @@ describe('simpleMemorized', () => {
             inspector('test', name, newValue);
             return name === 'yourName' && (newValue == null || newValue === '') ? 'Error' : null;
         };
-        const memorized = simpleMemorized(validator);
+        const memorized = memorizedAdaptor<State>(validator);
         const inspector = jest.fn();
         expect(memorized('yourName', '', values, inspector)).toBe('Error');
         expect(inspector.mock.calls.length).toBe(1);
@@ -29,7 +29,7 @@ describe('simpleMemorized', () => {
             inspector('test', name, newValue);
             return new Promise((resolve, reject) => setTimeout(() => resolve(), 100));
         };
-        const memorized = simpleMemorized(validator);
+        const memorized = memorizedAdaptor<State>(validator);
         const inspector = jest.fn();
         const result = memorized('yourName', '', values, inspector);
         expect.assertions(5);
@@ -54,7 +54,7 @@ describe('simpleMemorized', () => {
             inspector('test', name, newValue);
             return new Promise((resolve, reject) => setTimeout(() => reject('Error'), 100));
         };
-        const memorized = simpleMemorized(validator);
+        const memorized = memorizedAdaptor<State>(validator);
         const inspector = jest.fn();
         const result = memorized('yourName', '', values, inspector);
         expect.assertions(5);

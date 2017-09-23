@@ -3,7 +3,7 @@ import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
 import { isDefinedName } from './definitionChecker';
-import { changeAdaptor, focusAdaptor } from './eventAdaptors';
+import { changeAdaptor, focusAdaptor } from './eventHandlerAdaptors';
 import { invokeHandler, mergeErrors } from './handlerEngine';
 import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
 

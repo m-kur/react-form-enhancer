@@ -4,7 +4,7 @@ export interface ChangeEventHandler {
     (name: string, value: any, validateConcurrently?: boolean): void;
 }
 
-export interface ChangeEventAdaptor<E> {
+export interface ChangeEventHandlerAdaptor<E> {
     (prop: ChangeEventHandler, validateConcurrently?: boolean): (e: React.ChangeEvent<E>) => void;
 }
 
@@ -18,7 +18,7 @@ export type HasNameAndValueElement = HTMLInputElement | HTMLSelectElement | HTML
  * @param {ChangeEventHandler} prop this.props.formChange, etc.
  * @param {boolean} validateConcurrently do concurrent validation.
  */
-export const changeAdaptor: ChangeEventAdaptor<HasNameAndValueElement> =
+export const changeAdaptor: ChangeEventHandlerAdaptor<HasNameAndValueElement> =
     (prop, validateConcurrently = true) => (e) => {
         type EI = React.ChangeEvent<HTMLInputElement>;
         const value = e.target.type === 'checkbox' ? (e as EI).target.checked :
@@ -31,7 +31,7 @@ export interface FocusEventHandler {
     (name: string): void;
 }
 
-export interface FocusEventAdaptor<E> {
+export interface FocusEventHandlerAdaptor<E> {
     (prop: FocusEventHandler): (e: React.FocusEvent<E>) => void;
 }
 
@@ -44,7 +44,7 @@ export type HasNameElement = HasNameAndValueElement | HTMLFormElement | HTMLMapE
  * An adaptor for DOM onFocus event converts element's name attribute.
  * @param {FocusEventHandler} prop this.props.formValidate, etc.
  */
-export const focusAdaptor: FocusEventAdaptor<HasNameElement> =
+export const focusAdaptor: FocusEventHandlerAdaptor<HasNameElement> =
     prop => (e) => {
         const name = e.currentTarget.name != null ? e.currentTarget.name : (e.target as any).name;
         prop(name);
