@@ -30,3 +30,7 @@ export declare type HasNameElement = HasNameAndValueElement | HTMLFormElement | 
  * @param {FocusEventHandler} prop this.props.formValidate, etc.
  */
 export declare const focusAdaptor: FocusEventAdaptor<HasNameElement>;
+export declare type FormPropsEx = {
+    formOnChange: (e: React.ChangeEvent<HasNameAndValueElement>, validateConcurrently?: boolean) => void;
+    formOnValidate: (e: React.FocusEvent<HasNameElement>) => void;
+};

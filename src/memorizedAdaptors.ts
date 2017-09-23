@@ -1,32 +1,71 @@
 import { fromJS } from 'immutable';
 import { HandlerResult, InputValidator, Inspector } from './types';
 
-export function simpleMemorized<P>(validator: InputValidator<P>): InputValidator<P> {
-    let args: { name: string, newValue: any } | null = null;
-    let reason: HandlerResult<P> = null;
+export interface ValidatorMemory<P> {
+    isKnown(name: string, newValue: any, currentValues: P): boolean;
+    memorize(result: HandlerResult<P>, name: string, newValue: any, currentValues: P): void;
+    remember(): HandlerResult<P>;
+}
 
-    return (name: string, newValue: any, currentValues: P, inspector: Inspector) => {
-        const currentArgs = { name, newValue };
-        if (args == null || !fromJS(args).equals(fromJS(currentArgs))) {
-            args = currentArgs;
-            const r = validator(name, newValue, currentValues, inspector);
-            if (Promise.resolve<HandlerResult<P>>(r) === r) {
-                (r as Promise<HandlerResult<P>>).then(
-                    () => {
-                        // async-resolve, memorize.
-                        return reason = null;
-                    },
-                    (rr: HandlerResult<P>) => {
-                        // async-reject, memorize.
-                        return reason = rr;
-                    },
-                );
-                // return Promise object.
-                return r;
+export function createMemorizedFactory<P>(memory: ValidatorMemory<P>) {
+    return (validator: InputValidator<P>) => {
+        return (name: string, newValue: any, currentValues: P, inspector: Inspector) => {
+            if (!memory.isKnown(name, newValue, currentValues)) {
+                let validResult = null;
+                try {
+                    validResult = validator(name, newValue, currentValues, inspector);
+                } catch (error) {
+                    // don't memorize.
+                    return error.message;
+                }
+                if (Promise.resolve<HandlerResult<P>>(validResult) === validResult) {
+                    const promise = (validResult as Promise<never>);
+                    promise.then(
+                        () => {
+                            // async-resolve, memorize.
+                            memory.memorize(null, name, newValue, currentValues);
+                        },
+                        (reason: HandlerResult<P>) => {
+                            // async-reject, memorize.
+                            memory.memorize(reason, name, newValue, currentValues);
+                            return reason;
+                        },
+                    );
+                    return promise;
+                } else {
+                    // sync, memorize.
+                    memory.memorize(validResult as HandlerResult<P>, name, newValue, currentValues);
+                }
             }
-            // sync, memorize.
-            reason = (r as HandlerResult<P>);
-        }
-        return reason;
+            return memory.remember();
+        };
     };
+}
+
+class SimpleMemory<P> implements ValidatorMemory<P> {
+    constructor() {
+        this.isKnown = this.isKnown.bind(this);
+        this.memorize = this.memorize.bind(this);
+        this.remember = this.remember.bind(this);
+    }
+
+    private args: { name: string, newValue: any } | null = null;
+    private result: HandlerResult<P> = null;
+
+    isKnown(name: string, newValue: any, currentValues: P): boolean {
+        return this.args != null && fromJS(this.args).equals(fromJS({ name, newValue }));
+    }
+
+    memorize(result: HandlerResult<P>, name: string, newValue: any, currentValues: P) {
+        this.args = { name, newValue };
+        this.result = result;
+    }
+
+    remember(): HandlerResult<P> {
+        return this.result;
+    }
+}
+
+export function simpleMemorized<P>(validator: InputValidator<P>) {
+    return createMemorizedFactory<P>(new SimpleMemory<P>())(validator);
 }
