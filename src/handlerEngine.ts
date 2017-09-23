@@ -6,35 +6,38 @@ import { isDefinedName } from './definitionChecker';
 export function invokeHandler<P>(
     name: string,
     handle: () => Promise<never> | HandlerResult<P>, // <- Promise's type arg is intentional never.
-    resolve: () => void,
-    reject: (reason: any) => void,
-    inspect: Inspector,
+    onResolve: () => void,
+    onReject: (reason: any) => void,
+    notify: Inspector,
 ) {
-    const result = handle();
-    // don't catch Error.
+    let result = null;
+    try {
+        result = handle();
+    } catch (error) {
+        onReject(error);
+        notify('rejected', name, error);
+    }
     if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
-        inspect('handled', name, true);
-        (result as Promise<never>).then( // <- type arg is intentional never.
+        notify('handled', name);
+        const promise = (result as Promise<never>); // <- type arg is intentional never.
+        promise.then(
             () => {
-                // ignore returns when Promise is resolved.
-                resolve();
-                inspect('resolved', name, true);
+                onResolve();
+                notify('async-resolved', name);
             },
             (reason) => {
-                // don't catch Error.
-                if (reason instanceof Error) throw reason;
-                reject(reason);
-                inspect('rejected', name, true);
+                onReject(reason);
+                notify('async-rejected', name, reason);
             },
         );
     } else {
-        inspect('handled', name, false);
+        notify('handled', name);
         if (result == null) {
-            resolve();
-            inspect('resolved', name, false);
+            onResolve();
+            notify('resolved', name);
         } else {
-            reject(result);
-            inspect('rejected', name, false);
+            onReject(result);
+            notify('rejected', name, result);
         }
     }
 }
@@ -73,6 +76,10 @@ export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: str
         // reject returns string (or number, boolean)
         if (isDefinedName(definition, name, 'result of a validation', isForm)) {
             return Map<any>(oldError).set(name, String(newErrors)).toJS();
+        }
+    } else if (newErrors instanceof Error) {
+        if (isDefinedName(definition, name, 'Error of a validation', isForm)) {
+            return Map<any>(oldError).set(name, (newErrors as Error).message).toJS();
         }
     }
     // reject returns NOT string, maybe { [name: string]: any }

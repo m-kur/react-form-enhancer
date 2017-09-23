@@ -13,8 +13,8 @@ describe('invokeHandler sync', () => {
         expect(handle.mock.calls.length).toBe(1);
         expect(resolve.mock.calls.length).toBe(1);
         expect(reject.mock.calls.length).toBe(0);
-        expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', false]);
-        expect(inspect.mock.calls[1]).toEqual(['resolved', 'yourName', false]);
+        expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName']);
+        expect(inspect.mock.calls[1]).toEqual(['resolved', 'yourName']);
     });
 
     test('rejected', () => {
@@ -27,8 +27,8 @@ describe('invokeHandler sync', () => {
         expect(resolve.mock.calls.length).toBe(0);
         expect(reject.mock.calls.length).toBe(1);
         expect(reject.mock.calls[0][0]).toBe('Error');
-        expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', false]);
-        expect(inspect.mock.calls[1]).toEqual(['rejected', 'yourName', false]);
+        expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName']);
+        expect(inspect.mock.calls[1]).toEqual(['rejected', 'yourName', 'Error']);
     });
 });
 
@@ -48,8 +48,8 @@ describe('invokeHandler async', () => {
                 expect(handle.mock.calls.length).toBe(1);
                 expect(resolve.mock.calls.length).toBe(1);
                 expect(reject.mock.calls.length).toBe(0);
-                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', true]);
-                expect(inspect.mock.calls[1]).toEqual(['resolved', 'yourName', true]);
+                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', undefined]);
+                expect(inspect.mock.calls[1]).toEqual(['async-resolved', 'yourName', undefined]);
                 done();
             }
         };
@@ -70,8 +70,8 @@ describe('invokeHandler async', () => {
                 expect(resolve.mock.calls.length).toBe(0);
                 expect(reject.mock.calls.length).toBe(1);
                 expect(reject.mock.calls[0][0]).toBe('Error');
-                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', true]);
-                expect(inspect.mock.calls[1]).toEqual(['rejected', 'yourName', true]);
+                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', undefined]);
+                expect(inspect.mock.calls[1]).toEqual(['async-rejected', 'yourName', 'Error']);
                 done();
             }
         };

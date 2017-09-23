@@ -86,11 +86,11 @@ describe('async', () => {
         );
         const inspector: Inspector = (on, name, async) => {
             if (name === 'form') {
-                if (on === 'rejected') {
+                if (on === 'async-rejected') {
                     expect(async).toBeTruthy();
                     expect(form.state().errors.form).toBe('Sorry, can\'t submit.');
                     done();
-                } else if (on === 'resolved') {
+                } else if (on === 'async-resolved') {
                     done();
                 }
             }
@@ -111,11 +111,11 @@ describe('async', () => {
         );
         const inspector: Inspector = (on, name, async) => {
             if (name === 'yourName') {
-                if (on === 'rejected') {
+                if (on === 'async-rejected') {
                     expect(async).toBeTruthy();
                     expect(form.state().errors.yourName).toBe('Please tell me your name.');
                     done();
-                } else if (on === 'resolved') {
+                } else if (on === 'async-resolved') {
                     done();
                 }
             }

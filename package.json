@@ -27,7 +27,7 @@
         "lint": "tslint --fix --project ./ --type-check './src/**/*.{ts,tsx}'",
         "test": "jest",
         "build": "rimraf ./lib/* && tsc",
-        "doc": "rimraf ./doc/* && typedoc --out ./doc ./src/index.ts"
+        "docs": "rimraf ./docs/* && typedoc --out ./docs ./src/index.ts"
     },
     "jest": {
         "moduleFileExtensions": [

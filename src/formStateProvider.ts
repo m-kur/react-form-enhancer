@@ -2,9 +2,10 @@ import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import { Map } from 'immutable';
 
-import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
-import { invokeHandler, mergeErrors } from './handlerEngine';
 import { isDefinedName } from './definitionChecker';
+import { changeAdaptor, focusAdaptor } from './eventHandlerAdaptors';
+import { invokeHandler, mergeErrors } from './handlerEngine';
+import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
 
 /**
  * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
@@ -112,12 +113,12 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             }
         }
 
-        private change(name: string, value: any, validateConcurrently: boolean = true) {
+        private change(name: string, newValue: any, validateConcurrently: boolean = true) {
             if (isDefinedName<P>(this.props.defaultValues, name, 'props.formChange')) {
-                this.setState(Map({}).set('values', Map(this.state.values).set(name, value)).toJS());
-                this.notify('props.formChange', name, value);
+                this.setState(Map({}).set('values', Map(this.state.values).set(name, newValue)).toJS());
+                this.notify('props.formChange', name, newValue);
                 if (validateConcurrently) {
-                    this.invokeValidator(name, value);
+                    this.invokeValidator(name, newValue);
                 }
             }
         }
@@ -170,15 +171,20 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             const Component = Form as React.ComponentClass<FormProps<P>>;
             const props = Map<string, any>(this.props)
                 .delete('defaultValues').delete('submitter').delete('validators').delete('inspector')
-                .set('formValues', this.state.values)
-                .set('formErrors', this.state.errors)
-                .set('formIsSubmitting', this.state.isSubmitting)
-                .set('formIsPristine', this.isPristine())
-                .set('formHasError', this.hasError())
-                .set('formChange', this.change)
-                .set('formValidate', this.validate)
-                .set('formSubmit', this.submit)
-                .set('formReset', this.reset).toJS();
+                .merge({
+                    formValues: this.state.values,
+                    formErrors: this.state.errors,
+                    formIsSubmitting: this.state.isSubmitting,
+                    formIsPristine: this.isPristine(),
+                    formHasError: this.hasError(),
+                    formChange: this.change,
+                    formValidate: this.validate,
+                    formSubmit: this.submit,
+                    formReset: this.reset,
+                    // FormPropsEx
+                    formOnChange: changeAdaptor(this.change),
+                    formOnValidate: focusAdaptor(this.validate),
+                }).toJS();
             return React.createElement<FormProps<P>>(Component, props);
         }
     };

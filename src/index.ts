@@ -1,3 +1,4 @@
 export * from './types';
 export * from './formStateProvider';
-export * from './eventAdaptors';
+export * from './eventHandlerAdaptors';
+export * from './validatorAdaptors';
