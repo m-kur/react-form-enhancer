@@ -18,7 +18,7 @@ export function invokeHandler<P>(
         notify('rejected', name, error);
     }
     if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
-        notify('handled', name);
+        notify('async-handled', name);
         const promise = (result as Promise<never>); // <- type arg is intentional never.
         promise.then(
             () => {
@@ -64,6 +64,7 @@ export function sanitizeErrors<P>(definition: P, newErrors: any, isForm: boolean
 
 export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: string, newErrors: any): FormErrors<P> {
     const isForm = name === 'form';
+    const type = isForm ? 'submitting' : 'validation';
     if (newErrors == null) {
         if (isForm) {
             // submit -> resolve
@@ -74,11 +75,11 @@ export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: str
         }
     } else if (typeof newErrors === 'string' || typeof newErrors === 'number' || typeof newErrors === 'boolean') {
         // reject returns string (or number, boolean)
-        if (isDefinedName(definition, name, 'result of a validation', isForm)) {
+        if (isDefinedName(definition, name, `result of a ${type}`, isForm)) {
             return Map<any>(oldError).set(name, String(newErrors)).toJS();
         }
     } else if (newErrors instanceof Error) {
-        if (isDefinedName(definition, name, 'Error of a validation', isForm)) {
+        if (isDefinedName(definition, name, `Error of a ${type}`, isForm)) {
             return Map<any>(oldError).set(name, (newErrors as Error).message).toJS();
         }
     }
