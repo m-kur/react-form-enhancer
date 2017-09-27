@@ -5,7 +5,7 @@ import { isDefinedName } from './definitionChecker';
 
 export function invokeHandler<P>(
     name: string,
-    handle: () => Promise<never> | HandlerResult<P>, // <- Promise's type arg is intentional never.
+    handle: () => Promise<any> | HandlerResult<P>, // <- Promise's type arg is intentional never.
     onResolve: () => void,
     onReject: (reason: any) => void,
     notify: Inspector,
@@ -19,7 +19,7 @@ export function invokeHandler<P>(
     }
     if (Promise.resolve<HandlerResult<P>>(result) === result) { // <- type arg is intentional P.
         notify('async-handled', name);
-        const promise = (result as Promise<never>); // <- type arg is intentional never.
+        const promise = (result as Promise<any>);
         promise.then(
             () => {
                 onResolve();
