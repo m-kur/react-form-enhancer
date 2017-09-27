@@ -44,11 +44,11 @@ describe('invokeHandler async', () => {
         const inspect = jest.fn();
         const inspectDone: Inspector = (on, name, value) => {
             inspect(on, name, value);
-            if (on !== 'handled') {
+            if (on !== 'async-handled') {
                 expect(handle.mock.calls.length).toBe(1);
                 expect(resolve.mock.calls.length).toBe(1);
                 expect(reject.mock.calls.length).toBe(0);
-                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', undefined]);
+                expect(inspect.mock.calls[0]).toEqual(['async-handled', 'yourName', undefined]);
                 expect(inspect.mock.calls[1]).toEqual(['async-resolved', 'yourName', undefined]);
                 done();
             }
@@ -65,12 +65,12 @@ describe('invokeHandler async', () => {
         const inspect = jest.fn();
         const inspectDone: Inspector = (on, name, value) => {
             inspect(on, name, value);
-            if (on !== 'handled') {
+            if (on !== 'async-handled') {
                 expect(handle.mock.calls.length).toBe(1);
                 expect(resolve.mock.calls.length).toBe(0);
                 expect(reject.mock.calls.length).toBe(1);
                 expect(reject.mock.calls[0][0]).toBe('Error');
-                expect(inspect.mock.calls[0]).toEqual(['handled', 'yourName', undefined]);
+                expect(inspect.mock.calls[0]).toEqual(['async-handled', 'yourName', undefined]);
                 expect(inspect.mock.calls[1]).toEqual(['async-rejected', 'yourName', 'Error']);
                 done();
             }

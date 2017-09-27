@@ -42,7 +42,7 @@ export function memorizedAdaptor<P>(validator: InputValidator<P>, memory: Valida
                 return error.message;
             }
             if (Promise.resolve<HandlerResult<P>>(validResult) === validResult) {
-                const promise = (validResult as Promise<never>);
+                const promise = (validResult as Promise<any>);
                 promise.then(
                     () => {
                         // async-resolve, memorize.

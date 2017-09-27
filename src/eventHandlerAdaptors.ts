@@ -41,7 +41,7 @@ export interface FocusEventHandlerAdaptor<E> {
 export type HasNameElement = HasNameAndValueElement | HTMLFormElement | HTMLMapElement;
 
 /**
- * An adaptor for DOM onFocus event converts element's name attribute.
+ * An adaptor for DOM onFocus/onBlur event converts element's name attribute.
  * @param {FocusEventHandler} prop this.props.formValidate, etc.
  */
 export const focusAdaptor: FocusEventHandlerAdaptor<HasNameElement> =

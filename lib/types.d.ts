@@ -18,10 +18,10 @@ export interface FormSubmitter<P> {
      * @param {boolean} hasError This form has errors.
      * @param {boolean} isPristine This form is pristine, as same as default values.
      * @param {Inspector} inspector see {ProviderProps<P>}. a submitter debugging tool.
-     * @return {Promise<never> | HandlerResult<P>}
+     * @return {Promise<any> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P, hasError: boolean, isPristine: boolean, inspector: Inspector): Promise<never> | HandlerResult<P>;
+    (values: P, hasError: boolean, isPristine: boolean, inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 export interface InputValidator<P> {
     /**
@@ -30,10 +30,10 @@ export interface InputValidator<P> {
      * @param {any} newValue the new, incoming value of "name".
      * @param {P} currentValues form's current values, the value of "name" is old.
      * @param {Inspector} inspector see {ProviderProps<P>}. a validator debugging tool.
-     * @return {Promise<never> | HandlerResult<P>}
+     * @return {Promise<any> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (name: string, newValue: any, currentValues: P, inspector: Inspector): Promise<never> | HandlerResult<P>;
+    (name: string, newValue: any, currentValues: P, inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 export declare type ProviderProps<P> = {
     defaultValues: P;
