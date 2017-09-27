@@ -15,23 +15,23 @@ export class YourNameForm extends React.Component<FormProps<YourNameState> & For
         return (
             <form onSubmit={this.props.formSubmit}>
                 <input
-                    id="0"
+                    id="zero"
                     name="gently"
                     type="checkbox"
                     checked={this.props.formValues.gently}
                     onChange={this.props.formOnChange}
                 />
                 <input
-                    id="1"
+                    id="one"
                     name="yourName"
                     type="text"
                     value={this.props.formValues.yourName}
                     onChange={this.props.formOnChange}
                     onBlur={this.props.formOnValidate}
                 />
-                <div id="2">{this.props.formErrors.yourName}</div>
+                <div id="two">{this.props.formErrors.yourName}</div>
                 <select
-                    id="3"
+                    id="three"
                     name="greeting"
                     value={this.props.formValues.greeting}
                     onChange={this.props.formOnChange}
@@ -42,18 +42,18 @@ export class YourNameForm extends React.Component<FormProps<YourNameState> & For
                     <option value="have">have a good day.</option>
                     <option value="4x">FxxK!</option>
                 </select>
-                <div id="4">{this.props.formErrors.greeting}</div>
+                <div id="four">{this.props.formErrors.greeting}</div>
                 <input
-                    id="5"
+                    id="five"
                     type="submit"
                     disabled={this.props.formIsSubmitting || this.props.formHasError}
                 />
                 <input
-                    id="6"
+                    id="six"
                     type="button"
                     onClick={this.props.formReset}
                 />
-                <div id="7">{this.props.formErrors.form}</div>
+                <div id="seven">{this.props.formErrors.form}</div>
             </form>
         );
     }

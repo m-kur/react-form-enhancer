@@ -1,10 +1,12 @@
-const jsdom = require('jsdom').jsdom;
+var Enzyme = require('enzyme');
+var Adapter = require('enzyme-adapter-react-16');
 
-global.document = jsdom('');
-global.window = document.defaultView;
-global.navigator = {
-    userAgent: 'node.js',
-};
+Enzyme.configure({ adapter: new Adapter() });
+
+const { JSDOM } = require('jsdom');
+
+const jsdom = new JSDOM('<!doctype html><html><body></body></html>');
+const { window } = jsdom;
 
 function copyProps(src, target) {
     const props = Object.getOwnPropertyNames(src)
@@ -12,4 +14,10 @@ function copyProps(src, target) {
         .map(prop => Object.getOwnPropertyDescriptor(src, prop));
     Object.defineProperties(target, props);
 }
-copyProps(document.defaultView, global);
+
+global.window = window;
+global.document = window.document;
+global.navigator = {
+    userAgent: 'node.js',
+};
+copyProps(window, global);
