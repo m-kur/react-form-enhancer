@@ -63,7 +63,8 @@ export function sanitizeErrors<P>(definition: P, newErrors: any, isForm: boolean
     ).toJS();
 }
 
-export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: string, newErrors: any): FormErrors<P> {
+export function mergeErrors<P>(definition: P, oldError: FormErrors<P>, name: keyof P | 'form', newErrors: any):
+FormErrors<P> {
     const isForm = name === 'form';
     const type = isForm ? 'submitting' : 'validation';
     if (newErrors == null) {

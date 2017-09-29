@@ -32,7 +32,7 @@ export class SimpleMemory<P> implements HandlerMemory<P> {
 }
 
 export function memorizedAdaptor<P>(validator: FormHandler<P>, memory: HandlerMemory<P> = new SimpleMemory<P>()) {
-    return (currentValues: P, name: string, inspector: Inspector) => {
+    return (currentValues: P, name: keyof P | 'form', inspector: Inspector) => {
         if (!memory.isKnown(currentValues)) {
             let validResult = null;
             try {

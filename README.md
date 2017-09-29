@@ -127,7 +127,7 @@ submitter and validators are implement below interfaces.
 type HandlerResult<P> = FormErrors<P> | string | null;
 
 interface FormHandler<P> {
-    (values: P, name: string, inspector: Inspector): Promise<any> | HandlerResult<P>;
+    (values: P, name: keyof P | 'form', inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 ```
 

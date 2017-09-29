@@ -5,7 +5,7 @@ import { Map } from 'immutable';
 import { isDefinedName } from './definitionChecker';
 import { changeAdaptor, focusAdaptor } from './eventAdaptors';
 import { invokeHandler, mergeErrors } from './handlerEngine';
-import { FormErrors, ProviderProps, FormHandler, Inspector } from './types';
+import { FormErrors, ProviderProps, Inspector } from './types';
 
 /**
  * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
@@ -72,7 +72,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private isPristine(): boolean {
             for (const name of Object.keys(this.state.values)) {
-                if ((this.state.values as any)[name] !== (this.props.defaultValues as any)[name]) {
+                if (this.state.values[name as keyof P] !== this.props.defaultValues[name as keyof P]) {
                     return false;
                 }
             }
@@ -81,25 +81,25 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
 
         private hasError(): boolean {
             for (const name of Object.keys(this.state.errors)) {
-                if ((this.state.errors as any)[name] != null) {
+                if (this.state.errors[name as keyof P] != null) {
                     return true;
                 }
             }
             return false;
         }
 
-        private updateErrors(name: string, newErrors: any) {
+        private updateErrors(name: keyof P | 'form', newErrors: any) {
             if (this.canSetStateFromAsync) {
                 const errors = mergeErrors<P>(this.props.defaultValues, this.state.errors, name, newErrors);
                 this.setState({ errors });
             }
         }
 
-        private invokeValidator(name: string, newValue: any) {
+        private invokeValidator(name: keyof P, newValue: any) {
             if (this.props.validators == null) {
                 return;
             }
-            const validator = (this.props.validators as { [name: string]: FormHandler<P> })[name];
+            const validator = this.props.validators[name];
             if (validator == null) {
                 return;
             }
@@ -113,7 +113,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             );
         }
 
-        private change(name: string, newValue: any, validateConcurrently: boolean = true) {
+        private change(name: keyof P, newValue: any, validateConcurrently: boolean = true) {
             if (isDefinedName<P>(this.props.defaultValues, name, 'props.formChange')) {
                 this.setState(Map({}).set('values', Map(this.state.values).set(name, newValue)).toJS());
                 this.notify('props.formChange', name, newValue);
@@ -123,9 +123,9 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
             }
         }
 
-        private validate(name: string) {
+        private validate(name: keyof P) {
             if (isDefinedName<P>(this.props.defaultValues, name, 'props.formValidate')) {
-                this.invokeValidator(name, (this.state.values as any)[name]);
+                this.invokeValidator(name, this.state.values[name]);
                 this.notify('props.formValidate', name);
             }
         }

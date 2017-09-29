@@ -21,7 +21,7 @@ export interface FormHandler<P> {
      * @return {Promise<any> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P, name: string, inspector: Inspector): Promise<any> | HandlerResult<P>;
+    (values: P, name: keyof P | 'form', inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 
 export type ProviderProps<P> = {
