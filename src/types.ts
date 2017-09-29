@@ -12,35 +12,21 @@ export type FormErrors<P> = { [N in keyof P | 'form']?: string | null };
 
 export type HandlerResult<P> = FormErrors<P> | string | null;
 
-export interface FormSubmitter<P> {
+export interface FormHandler<P> {
     /**
-     * the submitting interface for a form.
-     * @param {P} values values form,s current values.
-     * @param {boolean} hasError This form has errors.
-     * @param {boolean} isPristine This form is pristine, as same as default values.
+     * the submitting and validating interface for a form.
+     * @param {P} values form,s current values.
+     * @param {string} name handling target. when submit, name is "form".
      * @param {Inspector} inspector see {ProviderProps<P>}. a submitter debugging tool.
      * @return {Promise<any> | HandlerResult<P>}
      *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
      */
-    (values: P, hasError: boolean, isPristine: boolean, inspector: Inspector): Promise<any> | HandlerResult<P>;
-}
-
-export interface InputValidator<P> {
-    /**
-     * the validation interface for inputs.
-     * @param {string} name target name.
-     * @param {any} newValue the new, incoming value of "name".
-     * @param {P} currentValues form's current values, the value of "name" is old.
-     * @param {Inspector} inspector see {ProviderProps<P>}. a validator debugging tool.
-     * @return {Promise<any> | HandlerResult<P>}
-     *     an error message, supposes Promise or FormErrors<P> or string or null(=success).
-     */
-    (name: string, newValue: any, currentValues: P, inspector: Inspector): Promise<any> | HandlerResult<P>;
+    (values: P, name: string, inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 
 export type ProviderProps<P> = {
     defaultValues: P,
-    submitter: FormSubmitter<P>,
-    validators?: InputValidator<P>[] | InputValidator<P>,
+    submitter: FormHandler<P>,
+    validators?: { [N in keyof P]?: FormHandler<P> },
     inspector?: Inspector;
 };

@@ -1,9 +1,9 @@
 import { fromJS } from 'immutable';
-import { HandlerResult, InputValidator, Inspector } from './types';
+import { HandlerResult, FormHandler, Inspector } from './types';
 
 export interface ValidatorMemory<P> {
-    isKnown(name: string, newValue: any, currentValues: P): boolean;
-    memorize(result: HandlerResult<P>, name: string, newValue: any, currentValues: P): void;
+    isKnown(currentValues: P): boolean;
+    memorize(currentValues: P, result: HandlerResult<P>): void;
     remember(): HandlerResult<P>;
 }
 
@@ -14,15 +14,15 @@ export class SimpleMemory<P> implements ValidatorMemory<P> {
         this.remember = this.remember.bind(this);
     }
 
-    private args: { name: string, newValue: any } | null = null;
+    private args: P | null = null;
     private result: HandlerResult<P> = null;
 
-    isKnown(name: string, newValue: any, currentValues: P): boolean {
-        return this.args != null && fromJS(this.args).equals(fromJS({ name, newValue }));
+    isKnown(currentValues: P): boolean {
+        return this.args != null && fromJS(this.args).equals(fromJS(currentValues));
     }
 
-    memorize(result: HandlerResult<P>, name: string, newValue: any, currentValues: P) {
-        this.args = { name, newValue };
+    memorize(currentValues: P, result: HandlerResult<P>) {
+        this.args = currentValues;
         this.result = result;
     }
 
@@ -31,12 +31,12 @@ export class SimpleMemory<P> implements ValidatorMemory<P> {
     }
 }
 
-export function memorizedAdaptor<P>(validator: InputValidator<P>, memory: ValidatorMemory<P> = new SimpleMemory<P>()) {
-    return (name: string, newValue: any, currentValues: P, inspector: Inspector) => {
-        if (!memory.isKnown(name, newValue, currentValues)) {
+export function memorizedAdaptor<P>(validator: FormHandler<P>, memory: ValidatorMemory<P> = new SimpleMemory<P>()) {
+    return (currentValues: P, name: string, inspector: Inspector) => {
+        if (!memory.isKnown(currentValues)) {
             let validResult = null;
             try {
-                validResult = validator(name, newValue, currentValues, inspector);
+                validResult = validator(currentValues, name, inspector);
             } catch (error) {
                 // don't memorize.
                 return error.message;
@@ -46,18 +46,18 @@ export function memorizedAdaptor<P>(validator: InputValidator<P>, memory: Valida
                 promise.then(
                     () => {
                         // async-resolve, memorize.
-                        memory.memorize(null, name, newValue, currentValues);
+                        memory.memorize(currentValues, null);
                     },
                     (reason: HandlerResult<P>) => {
                         // async-reject, memorize.
-                        memory.memorize(reason, name, newValue, currentValues);
+                        memory.memorize(currentValues, reason);
                         return reason;
                     },
                 );
                 return promise;
             } else {
                 // sync, memorize.
-                memory.memorize(validResult as HandlerResult<P>, name, newValue, currentValues);
+                memory.memorize(currentValues, validResult as HandlerResult<P>);
             }
         }
         return memory.remember();

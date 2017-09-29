@@ -5,7 +5,7 @@ import { Map } from 'immutable';
 import { isDefinedName } from './definitionChecker';
 import { changeAdaptor, focusAdaptor } from './eventHandlerAdaptors';
 import { invokeHandler, mergeErrors } from './handlerEngine';
-import { FormErrors, ProviderProps, InputValidator, Inspector } from './types';
+import { FormErrors, ProviderProps, FormHandler, Inspector } from './types';
 
 /**
  * FormStateProvider(=return of {formStateProvider<P>}) supplies all this properties.
@@ -42,7 +42,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         static propTypes = {
             defaultValues: PropTypes.object.isRequired,
             submitter: PropTypes.func.isRequired,
-            validators: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.func), PropTypes.func]),
+            validators: PropTypes.objectOf(PropTypes.func),
             inspector: PropTypes.func,
         };
 
@@ -96,21 +96,21 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
         }
 
         private invokeValidator(name: string, newValue: any) {
-            if (this.props.validators != null) {
-                const arrayOfValidators = Array.isArray(this.props.validators) ?
-                    this.props.validators as InputValidator<P>[] :
-                    [(this.props.validators as InputValidator<P>)];
-                arrayOfValidators.forEach((validator) => {
-                    const currentValues = Map(this.state.values).toJS();
-                    invokeHandler<P>(
-                        name,
-                        () => validator(name, newValue, currentValues, this.notify),
-                        () => this.updateErrors(name, null),
-                        reason => this.updateErrors(name, reason),
-                        this.notify,
-                    );
-                });
+            if (this.props.validators == null) {
+                return;
             }
+            const validator = (this.props.validators as { [name: string]: FormHandler<P> })[name];
+            if (validator == null) {
+                return;
+            }
+            const currentValues = Map(this.state.values).set(name, newValue).toJS();
+            invokeHandler<P>(
+                name,
+                () => validator(currentValues, name, this.notify),
+                () => this.updateErrors(name, null),
+                reason => this.updateErrors(name, reason),
+                this.notify,
+            );
         }
 
         private change(name: string, newValue: any, validateConcurrently: boolean = true) {
@@ -146,7 +146,7 @@ export function formStateProvider<P>(Form: FormComponent<P>): ProviderComponent<
                 'form',
                 () => {
                     const values = Map(this.state.values).toJS();
-                    return this.props.submitter(values, this.hasError(), this.isPristine(), this.notify);
+                    return this.props.submitter(values, 'form', this.notify);
                 },
                 () => {
                     this.updateErrors('form', null);

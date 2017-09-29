@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { FormSubmitter, InputValidator, Inspector } from '../types'; // for TS4023.
+import { FormHandler, Inspector } from '../types'; // for TS4023.
 import { FormProps, formStateProvider } from '../formStateProvider';
 import { FormPropsEx } from '../eventHandlerAdaptors';
 

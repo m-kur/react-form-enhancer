@@ -91,7 +91,7 @@ class YourNameForm extends React.Component<FormProps<FormState>> {
 const FormStateProvider = formStateProvider<FormState>(YourNameForm);
 
 // submit handler, axios send values to your API server.
-const submitter: FormSubmitter<FormState> = values => {
+const submitter: FormHandler<FormState> = (values) => {
     if (values.yourName == null || values.yourName === '' || values.yourName === 'YOUR NAME?') {
         return 'Can\'t submit.';
     }
@@ -99,16 +99,14 @@ const submitter: FormSubmitter<FormState> = values => {
         () => null, // null means success.
         (reason: any) => ({ form: reason }),
     );    
-}
+};
 
 // validation handler, set it to FormStateProvider's "validators" property 
-const validator = (name: string, newValue: any) => {
-    if (name === 'yourName') { 
-        // Return a Promise object if you want to do async validation.
-        // This sample returns string or null. It's a sync validation.
-        if (newValue == null || newValue === '' || newValue === 'YOUR NAME?') {
-            return 'Please tell me your name.';
-        }
+const validator: FormHandler<FormState> = (values) => {
+    // Return a Promise object if you want to do async validation.
+    // This sample returns string or null. It's a sync validation.
+    if (values.yourName == null || values.yourName === '' || values.yourName === 'YOUR NAME?') {
+        return 'Please tell me your name.';
     }
     return null;
 };
@@ -117,7 +115,7 @@ ReactDom.render(
     <FormStateProvider
         defaultValues={{ yourName: 'YOUR NAME?' }}
         submitter={submitter}
-        validators={validator}
+        validators={{ yourName: validator }}
     />,
     document.getElementById('application'),
 );
@@ -128,14 +126,8 @@ submitter and validators are implement below interfaces.
 ```JSX
 type HandlerResult<P> = FormErrors<P> | string | null;
 
-// the submitting interface for a form.
-interface FormSubmitter<P> {
-    (values: P, hasError: boolean, isPristine: boolean): Promise<never> | HandlerResult<P>;
-}
-
-// the validation interface for inputs.
-interface InputValidator<P> {
-    (name: string, newValue: any, currentValues: P): Promise<never> | HandlerResult<P>;
+interface FormHandler<P> {
+    (values: P, name: string, inspector: Inspector): Promise<any> | HandlerResult<P>;
 }
 ```
 
@@ -143,10 +135,10 @@ interface InputValidator<P> {
 
 ```JSX
 // Redux from 'redux', ReactRedux from 'react-redux'.
-const Connect = ReactRedux.connect(
+const ConnectedFormStateProvider = ReactRedux.connect<ProviderProps<FormState>>(
     state => ({
         defaultValues: { yourName: state.yourName || 'YOUR NAME?' },
-        validators: validator,
+        validators: { yourName: validator },
     }),
     (dispatch: Redux.Dispatch<any>) => ({
         submitter: values => dispatch({ type: 'SUBMIT', payload: values }),
@@ -155,7 +147,7 @@ const Connect = ReactRedux.connect(
 
 ReactDom.render(
     <ReactRedux.Provider store={yourStore}>
-        <Connect />
+        <ConnectedFormStateProvider />
     </ReactRedux.Provider>
     document.getElementById('application'),
 );

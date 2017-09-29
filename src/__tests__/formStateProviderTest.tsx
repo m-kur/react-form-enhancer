@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount, shallow } from 'enzyme';
+import { mount } from 'enzyme';
 
 import { Inspector } from '../types';
 import { YourNameComponent } from './YourName';
@@ -36,11 +36,9 @@ describe('sync', () => {
     });
 
     test('validator for yourName.onChange', () => {
-        const validator = (name: string, newValue: any) => {
-            if (name === 'yourName') {
-                if (newValue == null || newValue === '') {
-                    return 'Please tell me your name.';
-                }
+        const validator = (values: { yourName: string }) => {
+            if (values.yourName == null || values.yourName === '') {
+                return 'Please tell me your name.';
             }
             return null;
         };
@@ -49,7 +47,7 @@ describe('sync', () => {
             <YourNameComponent
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
                 submitter={() => null}
-                validators={validator}
+                validators={{ yourName: validator }}
             />);
         expect(form.state().errors).toEqual({});
         form.find('#one').simulate('change', { target: { name: 'yourName', value: '' } });
@@ -124,7 +122,7 @@ describe('async', () => {
             <YourNameComponent
                 defaultValues={{ gently: false, yourName: 'Mitsuha', greeting: 'have' }}
                 submitter={() => null}
-                validators={validator}
+                validators={{ yourName: validator }}
                 inspector={inspector}
             />);
         expect.assertions(2);
