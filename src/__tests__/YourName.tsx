@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { FormHandler, Inspector } from '../types'; // for TS4023.
 import { FormProps, formStateProvider } from '../formStateProvider';
-import { FormPropsEx } from '../eventHandlerAdaptors';
+import { FormPropsEx } from '../eventAdaptors';
 
 export type YourNameState = {
     gently: boolean,

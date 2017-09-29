@@ -1,28 +1,28 @@
 import { fromJS } from 'immutable';
 import { HandlerResult, FormHandler, Inspector } from './types';
 
-export interface ValidatorMemory<P> {
+export interface HandlerMemory<P> {
     isKnown(currentValues: P): boolean;
     memorize(currentValues: P, result: HandlerResult<P>): void;
     remember(): HandlerResult<P>;
 }
 
-export class SimpleMemory<P> implements ValidatorMemory<P> {
+export class SimpleMemory<P> implements HandlerMemory<P> {
     constructor() {
         this.isKnown = this.isKnown.bind(this);
         this.memorize = this.memorize.bind(this);
         this.remember = this.remember.bind(this);
     }
 
-    private args: P | null = null;
+    private args: any = null;
     private result: HandlerResult<P> = null;
 
     isKnown(currentValues: P): boolean {
-        return this.args != null && fromJS(this.args).equals(fromJS(currentValues));
+        return this.args != null && fromJS(currentValues).equals(this.args);
     }
 
     memorize(currentValues: P, result: HandlerResult<P>) {
-        this.args = currentValues;
+        this.args = fromJS(currentValues);
         this.result = result;
     }
 
@@ -31,7 +31,7 @@ export class SimpleMemory<P> implements ValidatorMemory<P> {
     }
 }
 
-export function memorizedAdaptor<P>(validator: FormHandler<P>, memory: ValidatorMemory<P> = new SimpleMemory<P>()) {
+export function memorizedAdaptor<P>(validator: FormHandler<P>, memory: HandlerMemory<P> = new SimpleMemory<P>()) {
     return (currentValues: P, name: string, inspector: Inspector) => {
         if (!memory.isKnown(currentValues)) {
             let validResult = null;

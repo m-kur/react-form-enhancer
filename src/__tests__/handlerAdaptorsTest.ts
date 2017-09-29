@@ -1,4 +1,4 @@
-import { memorizedAdaptor } from '../validatorAdaptors';
+import { memorizedAdaptor } from '../handlerAdaptors';
 import { FormHandler } from '../types';
 
 describe('memorizedAdaptor', () => {
