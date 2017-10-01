@@ -12,4 +12,4 @@ export declare class SimpleMemory<P> implements HandlerMemory<P> {
     memorize(currentValues: P, result: HandlerResult<P>): void;
     remember(): HandlerResult<P>;
 }
-export declare function memorizedAdaptor<P>(validator: FormHandler<P>, memory?: HandlerMemory<P>): (currentValues: P, name: string, inspector: Inspector) => any;
+export declare function memorizedAdaptor<P>(validator: FormHandler<P>, memory?: HandlerMemory<P>): (currentValues: P, name: "form" | (keyof P), inspector: Inspector) => any;

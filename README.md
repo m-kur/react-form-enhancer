@@ -40,8 +40,8 @@ type FormProps<P> = {
     formIsSubmitting: boolean,
     formIsPristine: boolean,
     formHasError: boolean,
-    formChange: (name: string, value: any, validate?: boolean) => void,
-    formValidate: (name: string) => void,
+    formChange: (name: keyof P, value: any, validate?: boolean) => void,
+    formValidate: (name: keyof P) => void,
     formSubmit: (event?: React.FormEvent<any>) => void,
     formReset: () => void,
 };

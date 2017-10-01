@@ -1,6 +1,6 @@
 {
     "name": "react-form-enhancer",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "description": "This library enhances React form components with React's basic state & property.",
     "main": "./lib/index.js",
     "types": "./lib/index.d.ts",
